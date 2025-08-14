@@ -83,7 +83,12 @@ class ContainerBlockDesigner {
         if (file_exists(CBD_PLUGIN_DIR . 'includes/database-fix.php')) {
             require_once CBD_PLUGIN_DIR . 'includes/database-fix.php';
         }
-        
+
+        // Quick Fix Tool - NEU HINZUFÜGEN
+        if (file_exists(CBD_PLUGIN_DIR . 'quickfix.php')) {
+            require_once CBD_PLUGIN_DIR . 'quickfix.php';
+        }
+
         // Admin includes
         if (is_admin()) {
             // Admin Features Class
