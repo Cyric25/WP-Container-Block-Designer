@@ -1,0 +1,429 @@
+/**
+ * Container Block Designer - Frontend Features Styles
+ * Version: 2.2.0
+ */
+
+/* ========================================
+   Feature 1: Block Icon
+   ======================================== */
+
+.cbd-container[data-icon="true"] {
+    position: relative;
+}
+
+.cbd-container-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+}
+
+.cbd-container-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: inherit;
+}
+
+/* Icon in header variation */
+.cbd-container-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.cbd-container-header .cbd-container-icon {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   Feature 2: Collapse/Expand
+   ======================================== */
+
+.cbd-container[data-collapse="true"] {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.cbd-collapse-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.cbd-collapse-header:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.cbd-collapse-toggle {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.cbd-collapsed .cbd-collapse-toggle {
+    transform: rotate(-90deg);
+}
+
+.cbd-collapse-content {
+    padding: 20px 0;
+    animation: cbd-slide-down 0.3s ease;
+}
+
+.cbd-collapsed .cbd-collapse-content {
+    display: none;
+}
+
+@keyframes cbd-slide-down {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   Feature 3: Numbering
+   ======================================== */
+
+.cbd-container[data-numbering="true"] {
+    position: relative;
+    padding-left: 60px !important;
+}
+
+.cbd-container-number {
+    position: absolute;
+    left: 15px;
+    top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    background: #2271b1;
+    color: #fff;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Numbering with collapse */
+.cbd-container[data-numbering="true"][data-collapse="true"] .cbd-container-number {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Alternative numbering styles */
+.cbd-container[data-numbering-style="square"] .cbd-container-number {
+    border-radius: 4px;
+}
+
+.cbd-container[data-numbering-style="outline"] .cbd-container-number {
+    background: transparent;
+    color: #2271b1;
+    border: 2px solid #2271b1;
+}
+
+/* ========================================
+   Feature 4: Copy Text Button
+   ======================================== */
+
+.cbd-copy-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 8px 16px;
+    background: #f0f0f1;
+    color: #1e1e1e;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cbd-copy-button:before {
+    content: "\f105";
+    font-family: dashicons;
+    font-size: 16px;
+}
+
+.cbd-copy-button:hover {
+    background: #e0e0e0;
+    border-color: #8c8f94;
+}
+
+.cbd-copy-button:active {
+    transform: translateY(1px);
+}
+
+.cbd-copy-button.copied {
+    background: #00a32a;
+    color: #fff;
+    border-color: #00a32a;
+}
+
+.cbd-copy-button.copied:before {
+    content: "\f147";
+}
+
+/* ========================================
+   Feature 5: Screenshot Button
+   ======================================== */
+
+.cbd-screenshot-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 8px 16px;
+    background: #2271b1;
+    color: #fff;
+    border: 1px solid #2271b1;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cbd-screenshot-button:before {
+    content: "\f306";
+    font-family: dashicons;
+    font-size: 16px;
+}
+
+.cbd-screenshot-button:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.cbd-screenshot-button:active {
+    transform: translateY(1px);
+}
+
+.cbd-screenshot-button.processing {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cbd-screenshot-button.processing:before {
+    content: "\f463";
+    animation: cbd-spin 1s linear infinite;
+}
+
+@keyframes cbd-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   Features Container
+   ======================================== */
+
+.cbd-features-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.cbd-features-container .cbd-copy-button,
+.cbd-features-container .cbd-screenshot-button {
+    margin: 0;
+}
+
+/* ========================================
+   Message Notifications
+   ======================================== */
+
+.cbd-message {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 12px 20px;
+    background: #1e1e1e;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 100000;
+    display: none;
+    animation: cbd-message-slide-in 0.3s ease;
+}
+
+.cbd-message.success {
+    background: #00a32a;
+}
+
+.cbd-message.error {
+    background: #d63638;
+}
+
+@keyframes cbd-message-slide-in {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .cbd-container[data-numbering="true"] {
+        padding-left: 50px !important;
+    }
+    
+    .cbd-container-number {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+        left: 10px;
+    }
+    
+    .cbd-collapse-header {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .cbd-features-container {
+        flex-direction: column;
+    }
+    
+    .cbd-copy-button,
+    .cbd-screenshot-button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .cbd-message {
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .cbd-container[data-numbering="true"] {
+        padding-left: 45px !important;
+    }
+    
+    .cbd-container-number {
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .cbd-copy-button,
+    .cbd-screenshot-button,
+    .cbd-collapse-toggle,
+    .cbd-message {
+        display: none !important;
+    }
+    
+    .cbd-collapsed .cbd-collapse-content {
+        display: block !important;
+    }
+    
+    .cbd-container {
+        break-inside: avoid;
+    }
+}
+
+/* ========================================
+   Accessibility
+   ======================================== */
+
+.cbd-copy-button:focus,
+.cbd-screenshot-button:focus,
+.cbd-collapse-header:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.cbd-collapse-header[tabindex="0"]:focus-visible {
+    box-shadow: 0 0 0 2px #2271b1;
+}
+
+/* Screen reader only text */
+.cbd-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ========================================
+   Dark Mode Support (optional)
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    .cbd-container-icon {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .cbd-collapse-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .cbd-collapse-header:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .cbd-copy-button {
+        background: #2c3338;
+        color: #fff;
+        border-color: #3c434a;
+    }
+    
+    .cbd-copy-button:hover {
+        background: #3c434a;
+        border-color: #50575e;
+    }
+}

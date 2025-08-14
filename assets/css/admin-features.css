@@ -1,0 +1,422 @@
+/**
+ * Container Block Designer - Admin Features Styles
+ * Version: 2.2.0
+ */
+
+/* Features Modal Base */
+.cbd-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: none;
+}
+
+.cbd-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.cbd-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: cbd-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes cbd-modal-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Modal Header */
+.cbd-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cbd-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e1e1e;
+}
+
+.cbd-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border-radius: 4px;
+}
+
+.cbd-modal-close:hover {
+    background: #f0f0f0;
+    color: #000;
+}
+
+/* Modal Body */
+.cbd-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Feature Items */
+.cbd-feature-item {
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.cbd-feature-item:hover {
+    border-color: #2271b1;
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.1);
+}
+
+.cbd-feature-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    gap: 16px;
+}
+
+.cbd-feature-info {
+    flex: 1;
+}
+
+.cbd-feature-info strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #1e1e1e;
+}
+
+.cbd-feature-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Toggle Switch */
+.cbd-feature-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.cbd-feature-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.cbd-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.cbd-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.cbd-feature-toggle input:checked + .cbd-toggle-slider {
+    background-color: #2271b1;
+}
+
+.cbd-feature-toggle input:checked + .cbd-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Feature Settings */
+.cbd-feature-settings {
+    padding: 16px;
+    background: #fff;
+    border-top: 1px solid #e0e0e0;
+    display: none;
+}
+
+.cbd-feature-settings label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.cbd-feature-settings input[type="text"],
+.cbd-feature-settings select {
+    width: 100%;
+    max-width: 300px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.cbd-feature-settings input[type="text"]:focus,
+.cbd-feature-settings select:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+/* Icon Selector */
+.cbd-icon-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cbd-icon-selector .regular-text {
+    flex: 1;
+    max-width: 250px;
+}
+
+.cbd-icon-picker {
+    flex-shrink: 0;
+}
+
+.cbd-current-icon {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+}
+
+.cbd-current-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #333;
+}
+
+/* Modal Footer */
+.cbd-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.cbd-modal-footer .button {
+    min-width: 100px;
+}
+
+.cbd-modal-footer #cbd-save-features {
+    margin-left: auto;
+}
+
+.cbd-modal-footer .button-success {
+    background: #00a32a !important;
+    border-color: #00a32a !important;
+    color: #fff !important;
+}
+
+/* Icon Picker Dialog */
+.cbd-icon-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 100001;
+    display: none;
+}
+
+.cbd-icon-picker-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.cbd-icon-picker-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cbd-icon-picker-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.cbd-icon-picker-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    line-height: 1;
+}
+
+.cbd-icon-picker-close:hover {
+    color: #000;
+}
+
+.cbd-icon-picker-grid {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.cbd-icon-picker-item {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.cbd-icon-picker-item:hover {
+    border-color: #2271b1;
+    background: #f0f8ff;
+    transform: scale(1.1);
+}
+
+.cbd-icon-picker-item .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #333;
+}
+
+/* Feature Badges in List */
+.cbd-features-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.cbd-feature-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #e8f4f8;
+    color: #135e96;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid #b5d9ea;
+}
+
+/* Features Button in Block Edit */
+.cbd-features-btn {
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #fff !important;
+    margin-left: 8px;
+}
+
+.cbd-features-btn:hover {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+}
+
+.cbd-features-btn .dashicons {
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cbd-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .cbd-modal-header {
+        padding: 16px 20px;
+    }
+    
+    .cbd-modal-body {
+        padding: 20px;
+    }
+    
+    .cbd-icon-picker-grid {
+        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        gap: 8px;
+    }
+    
+    .cbd-icon-picker-item {
+        width: 45px;
+        height: 45px;
+    }
+}
