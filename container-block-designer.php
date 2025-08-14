@@ -92,7 +92,12 @@ class ContainerBlockDesigner {
         if (file_exists(CBD_PLUGIN_DIR . 'includes/fix-localization.php')) {
            require_once CBD_PLUGIN_DIR . 'includes/fix-localization.php';
         }
-        
+
+        // AJAX URL sicherstellen
+        if (file_exists(CBD_PLUGIN_DIR . 'includes/ensure-ajaxurl.php')) {
+            require_once CBD_PLUGIN_DIR . 'includes/ensure-ajaxurl.php';
+        }
+
         // Admin includes
         if (is_admin()) {
             // Admin Features Class

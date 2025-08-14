@@ -24,9 +24,20 @@
             // Check if cbdAdmin localization exists
             if (typeof cbdAdmin === 'undefined') {
                 console.warn('⚠️ cbdAdmin localization object not found. Creating fallback...');
+                
+                // Try to get ajaxurl from different sources
+                let ajaxUrl = '';
+                if (typeof ajaxurl !== 'undefined') {
+                    ajaxUrl = ajaxurl;
+                } else if (typeof wp !== 'undefined' && wp.ajax && wp.ajax.settings && wp.ajax.settings.url) {
+                    ajaxUrl = wp.ajax.settings.url;
+                } else {
+                    ajaxUrl = '/wp-admin/admin-ajax.php';
+                }
+                
                 window.cbdAdmin = {
-                    ajaxUrl: ajaxurl || '/wp-admin/admin-ajax.php',
-                    nonce: '',
+                    ajaxUrl: ajaxUrl,
+                    nonce: $('#cbd_nonce').val() || $('input[name="cbd_nonce"]').val() || '',
                     strings: {
                         confirmDelete: 'Sind Sie sicher, dass Sie diesen Block löschen möchten?',
                         saving: 'Speichern...',
