@@ -88,7 +88,11 @@ class ContainerBlockDesigner {
         if (file_exists(CBD_PLUGIN_DIR . 'quickfix.php')) {
             require_once CBD_PLUGIN_DIR . 'quickfix.php';
         }
-
+        // Nach den anderen require_once Statements:
+        if (file_exists(CBD_PLUGIN_DIR . 'includes/fix-localization.php')) {
+           require_once CBD_PLUGIN_DIR . 'includes/fix-localization.php';
+        }
+        
         // Admin includes
         if (is_admin()) {
             // Admin Features Class
