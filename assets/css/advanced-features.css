@@ -1,32 +1,47 @@
 /**
- * Container Block Designer - Frontend Features Styles
- * Version: 2.2.0
+ * Container Block Designer - Advanced Features Styles
+ * Version: 2.3.0 - Fixes duplicate button issue
  */
+
+/* ========================================
+   Base Container Styles
+   ======================================== */
+
+.cbd-container {
+    position: relative;
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.cbd-container:hover {
+    border-color: #d0d0d0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
 /* ========================================
    Feature 1: Block Icon
    ======================================== */
 
-.cbd-container[data-icon="true"] {
-    position: relative;
-}
-
-.cbd-container-icon {
+.cbd-container[data-icon="true"] .cbd-container-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
     margin-bottom: 15px;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 123, 255, 0.1);
     border-radius: 50%;
+    color: #007cba;
 }
 
 .cbd-container-icon .dashicons {
     font-size: 24px;
     width: 24px;
     height: 24px;
-    color: inherit;
 }
 
 /* Icon in header variation */
@@ -45,30 +60,32 @@
 }
 
 /* ========================================
-   Feature 2: Collapse/Expand
+   Feature 2: Collapse/Expand - FIXED
    ======================================== */
 
 .cbd-container[data-collapse="true"] {
-    position: relative;
-    transition: all 0.3s ease;
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
 .cbd-collapse-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .cbd-collapse-header:hover {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.15);
+    background: #e9ecef;
+    border-color: #adb5bd;
 }
 
 .cbd-collapse-toggle {
@@ -77,30 +94,148 @@
     height: 20px;
     color: #666;
     transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
-.cbd-collapsed .cbd-collapse-toggle {
-    transform: rotate(-90deg);
+.cbd-collapse-title {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #495057;
 }
 
-.cbd-collapse-content {
-    padding: 20px 0;
+/* WICHTIG: Button-Positionierung bei Collapse */
+.cbd-action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Buttons im Header (nur sichtbar wenn collapsed) */
+.cbd-action-buttons-header {
+    margin-left: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Buttons im Content (nur sichtbar wenn expanded) */
+.cbd-action-buttons-content {
+    margin-top: 15px;
+    justify-content: flex-end;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+}
+
+/* Default Buttons (wenn kein Collapse) */
+.cbd-action-buttons-default {
+    margin-top: 15px;
+    justify-content: flex-end;
+}
+
+/* ========================================
+   Collapse States - KRITISCHE FIXES
+   ======================================== */
+
+/* Expanded State (Standard) */
+.cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-collapse-content {
+    display: block;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    background: #ffffff;
     animation: cbd-slide-down 0.3s ease;
 }
 
-.cbd-collapsed .cbd-collapse-content {
+.cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-action-buttons-header {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-action-buttons-content {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Collapsed State */
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-content {
     display: none;
 }
 
-@keyframes cbd-slide-down {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-header {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-content {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-toggle {
+    transform: rotate(-90deg);
+}
+
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-header {
+    border-radius: 6px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* ========================================
+   Action Buttons Styling
+   ======================================== */
+
+.cbd-action-buttons button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #007cba;
+    background: #007cba;
+    color: #ffffff;
+    border-radius: 4px;
+    font-size: 13px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cbd-action-buttons button:hover {
+    background: #005a87;
+    border-color: #005a87;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 124, 186, 0.2);
+}
+
+.cbd-action-buttons button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 124, 186, 0.2);
+}
+
+.cbd-action-buttons button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Success state for copy button */
+.cbd-copy-button.success {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.cbd-copy-button.success:hover {
+    background: #218838;
+    border-color: #218838;
+}
+
+/* Processing state */
+.cbd-action-buttons button:disabled,
+.cbd-action-buttons button.processing {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 /* ========================================
@@ -108,192 +243,100 @@
    ======================================== */
 
 .cbd-container[data-numbering="true"] {
+    counter-increment: cbd-counter;
     position: relative;
-    padding-left: 60px !important;
 }
 
-.cbd-container-number {
+.cbd-container[data-numbering="true"]:before {
+    content: counter(cbd-counter);
     position: absolute;
-    left: 15px;
-    top: 20px;
+    top: -10px;
+    left: -10px;
+    width: 30px;
+    height: 30px;
+    background: #007cba;
+    color: white;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 35px;
-    height: 35px;
-    background: #2271b1;
-    color: #fff;
+    font-size: 14px;
     font-weight: bold;
-    font-size: 16px;
-    border-radius: 50%;
     z-index: 1;
 }
 
-/* Numbering with collapse */
-.cbd-container[data-numbering="true"][data-collapse="true"] .cbd-container-number {
-    top: 50%;
-    transform: translateY(-50%);
+/* Alphabetic numbering */
+.cbd-container[data-numbering-format="alpha"]:before {
+    content: counter(cbd-counter, upper-alpha);
 }
 
-/* Alternative numbering styles */
-.cbd-container[data-numbering-style="square"] .cbd-container-number {
-    border-radius: 4px;
+/* Roman numbering */
+.cbd-container[data-numbering-format="roman"]:before {
+    content: counter(cbd-counter, upper-roman);
 }
 
-.cbd-container[data-numbering-style="outline"] .cbd-container-number {
-    background: transparent;
-    color: #2271b1;
-    border: 2px solid #2271b1;
-}
-
-/* ========================================
-   Feature 4: Copy Text Button
-   ======================================== */
-
-.cbd-copy-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 15px 0;
-    padding: 8px 16px;
-    background: #f0f0f1;
-    color: #1e1e1e;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.cbd-copy-button:before {
-    content: "\f105";
-    font-family: dashicons;
-    font-size: 16px;
-}
-
-.cbd-copy-button:hover {
-    background: #e0e0e0;
-    border-color: #8c8f94;
-}
-
-.cbd-copy-button:active {
-    transform: translateY(1px);
-}
-
-.cbd-copy-button.copied {
-    background: #00a32a;
-    color: #fff;
-    border-color: #00a32a;
-}
-
-.cbd-copy-button.copied:before {
-    content: "\f147";
+/* Reset counter for container groups */
+.cbd-container-group {
+    counter-reset: cbd-counter;
 }
 
 /* ========================================
-   Feature 5: Screenshot Button
+   Editor Preview Styles
    ======================================== */
 
-.cbd-screenshot-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 15px 0;
-    padding: 8px 16px;
-    background: #2271b1;
-    color: #fff;
-    border: 1px solid #2271b1;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Editor-spezifische Styles */
+.block-editor-block-list__layout .cbd-container {
+    margin: 10px 0;
 }
 
-.cbd-screenshot-button:before {
-    content: "\f306";
-    font-family: dashicons;
-    font-size: 16px;
+.cbd-preview-button {
+    opacity: 0.7;
+    pointer-events: none;
 }
 
-.cbd-screenshot-button:hover {
-    background: #135e96;
-    border-color: #135e96;
-}
-
-.cbd-screenshot-button:active {
-    transform: translateY(1px);
-}
-
-.cbd-screenshot-button.processing {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.cbd-screenshot-button.processing:before {
-    content: "\f463";
-    animation: cbd-spin 1s linear infinite;
-}
-
-@keyframes cbd-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* ========================================
-   Features Container
-   ======================================== */
-
-.cbd-features-container {
+.cbd-feature-buttons-preview {
+    margin-top: 15px;
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    gap: 8px;
+    justify-content: flex-end;
 }
 
-.cbd-features-container .cbd-copy-button,
-.cbd-features-container .cbd-screenshot-button {
-    margin: 0;
+.cbd-collapse-buttons {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.cbd-collapse-buttons .cbd-preview-button {
+    padding: 4px 8px;
+    font-size: 12px;
 }
 
 /* ========================================
-   Message Notifications
+   Animations
    ======================================== */
 
-.cbd-message {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    padding: 12px 20px;
-    background: #1e1e1e;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    z-index: 100000;
-    display: none;
-    animation: cbd-message-slide-in 0.3s ease;
-}
-
-.cbd-message.success {
-    background: #00a32a;
-}
-
-.cbd-message.error {
-    background: #d63638;
-}
-
-@keyframes cbd-message-slide-in {
+@keyframes cbd-slide-down {
     from {
-        transform: translateY(20px);
         opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
     }
     to {
-        transform: translateY(0);
         opacity: 1;
+        max-height: 1000px;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cbd-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
@@ -302,70 +345,50 @@
    ======================================== */
 
 @media (max-width: 768px) {
-    .cbd-container[data-numbering="true"] {
-        padding-left: 50px !important;
-    }
-    
-    .cbd-container-number {
-        width: 30px;
-        height: 30px;
-        font-size: 14px;
-        left: 10px;
+    .cbd-container {
+        margin: 15px 0;
+        padding: 15px;
     }
     
     .cbd-collapse-header {
-        padding: 12px;
-        font-size: 14px;
+        padding: 12px 15px;
     }
     
-    .cbd-features-container {
+    .cbd-action-buttons {
         flex-direction: column;
+        gap: 6px;
     }
     
-    .cbd-copy-button,
-    .cbd-screenshot-button {
+    .cbd-action-buttons button {
         width: 100%;
         justify-content: center;
     }
     
-    .cbd-message {
-        bottom: 20px;
-        right: 20px;
-        left: 20px;
-        text-align: center;
+    .cbd-container-icon {
+        width: 35px !important;
+        height: 35px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .cbd-container-icon .dashicons {
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
     }
 }
 
 @media (max-width: 480px) {
-    .cbd-container[data-numbering="true"] {
-        padding-left: 45px !important;
+    .cbd-collapse-header {
+        padding: 10px 12px;
     }
     
-    .cbd-container-number {
-        width: 25px;
-        height: 25px;
+    .cbd-collapse-title {
+        font-size: 14px;
+    }
+    
+    .cbd-action-buttons button {
+        padding: 6px 10px;
         font-size: 12px;
-    }
-}
-
-/* ========================================
-   Print Styles
-   ======================================== */
-
-@media print {
-    .cbd-copy-button,
-    .cbd-screenshot-button,
-    .cbd-collapse-toggle,
-    .cbd-message {
-        display: none !important;
-    }
-    
-    .cbd-collapsed .cbd-collapse-content {
-        display: block !important;
-    }
-    
-    .cbd-container {
-        break-inside: avoid;
     }
 }
 
@@ -373,57 +396,39 @@
    Accessibility
    ======================================== */
 
-.cbd-copy-button:focus,
-.cbd-screenshot-button:focus,
 .cbd-collapse-header:focus {
-    outline: 2px solid #2271b1;
+    outline: 2px solid #007cba;
     outline-offset: 2px;
 }
 
-.cbd-collapse-header[tabindex="0"]:focus-visible {
-    box-shadow: 0 0 0 2px #2271b1;
+.cbd-action-buttons button:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
 }
 
-/* Screen reader only text */
-.cbd-sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .cbd-container {
+        border-width: 2px;
+    }
+    
+    .cbd-action-buttons button {
+        border-width: 2px;
+    }
 }
 
-/* ========================================
-   Dark Mode Support (optional)
-   ======================================== */
-
-@media (prefers-color-scheme: dark) {
-    .cbd-container-icon {
-        background: rgba(255, 255, 255, 0.1);
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .cbd-container,
+    .cbd-collapse-header,
+    .cbd-action-buttons button,
+    .cbd-collapse-toggle {
+        transition: none;
     }
     
-    .cbd-collapse-header {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    .cbd-collapse-header:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-    
-    .cbd-copy-button {
-        background: #2c3338;
-        color: #fff;
-        border-color: #3c434a;
-    }
-    
-    .cbd-copy-button:hover {
-        background: #3c434a;
-        border-color: #50575e;
+    @keyframes cbd-slide-down {
+        from, to {
+            transform: none;
+        }
     }
 }

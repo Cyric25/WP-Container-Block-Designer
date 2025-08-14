@@ -25,7 +25,7 @@ if (defined('CBD_VERSION')) {
 }
 
 // Plugin constants
-define('CBD_VERSION', '2.2.0');
+define('CBD_VERSION', '2.3.0');
 define('CBD_FEATURES_VERSION', '2.0.0');
 define('CBD_PLUGIN_FILE', __FILE__);
 define('CBD_PLUGIN_DIR', plugin_dir_path(__FILE__));
