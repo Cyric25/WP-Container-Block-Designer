@@ -1,13 +1,14 @@
-(function(wp, $) {
+(function(wp) {
     'use strict';
     
     const { registerBlockType } = wp.blocks;
-    const { InnerBlocks, InspectorControls } = wp.blockEditor;
-    const { PanelBody, SelectControl, TextControl, ToggleControl, Notice, BaseControl, ButtonGroup, Button } = wp.components;
+    const { InnerBlocks, InspectorControls, useBlockProps } = wp.blockEditor;
+    const { PanelBody, SelectControl, ToggleControl, BaseControl, ButtonGroup, Button } = wp.components;
     const { Fragment, useState, useEffect } = wp.element;
     const { __ } = wp.i18n;
+    const { select } = wp.data;
     
-    // Dashicon-Optionen für Icon-Auswahl
+    // WordPress Dashicons für Icon-Auswahl
     const DASHICON_OPTIONS = [
         { label: __('Standard', 'container-block-designer'), value: 'dashicons-admin-generic' },
         { label: __('Info', 'container-block-designer'), value: 'dashicons-info' },
@@ -16,13 +17,13 @@
         { label: __('Stern', 'container-block-designer'), value: 'dashicons-star-filled' },
         { label: __('Herz', 'container-block-designer'), value: 'dashicons-heart' },
         { label: __('Pfeil rechts', 'container-block-designer'), value: 'dashicons-arrow-right-alt' },
-        { label: __('Pfeil unten', 'container-block-designer'), value: 'dashicons-arrow-down-alt' },
+        { label: __('Pfeil down', 'container-block-designer'), value: 'dashicons-arrow-down-alt' },
         { label: __('Kamera', 'container-block-designer'), value: 'dashicons-camera' },
         { label: __('Clipboard', 'container-block-designer'), value: 'dashicons-clipboard' },
         { label: __('Einstellungen', 'container-block-designer'), value: 'dashicons-admin-settings' },
-        { label: __('Layout', 'container-block-designer'), value: 'dashicons-layout' }
+        { label: __('Layout', 'container-block-designer'), value: 'dashicons-layout' },
     ];
-
+    
     registerBlockType('container-block-designer/container', {
         title: __('Design Container', 'container-block-designer'),
         icon: 'layout',
@@ -35,687 +36,391 @@
                 default: ''
             },
             customClasses: {
-                type: 'string', 
+                type: 'string',
                 default: ''
             },
             blockConfig: {
                 type: 'object',
                 default: {}
             },
-            // Feature-Attribute (vereinfacht für bessere Kompatibilität)
-            enableIcon: {
-                type: 'boolean'
-                // Kein default - wird von globalen Einstellungen bestimmt
-            },
-            iconValue: {
-                type: 'string',
-                default: 'dashicons-admin-generic'
-            },
-            enableCollapse: {
-                type: 'boolean'
-                // Kein default - wird von globalen Einstellungen bestimmt
-            },
-            collapseDefault: {
-                type: 'string',
-                default: 'expanded'
-            },
-            enableNumbering: {
-                type: 'boolean'
-                // Kein default - wird von globalen Einstellungen bestimmt
-            },
-            numberingFormat: {
-                type: 'string',
-                default: 'numeric'
-            },
-            enableCopyText: {
-                type: 'boolean'
-                // Kein default - wird von globalen Einstellungen bestimmt
-            },
-            copyButtonText: {
-                type: 'string',
-                default: 'Text kopieren'
-            },
-            enableScreenshot: {
-                type: 'boolean'
-                // Kein default - wird von globalen Einstellungen bestimmt
-            },
-            screenshotButtonText: {
-                type: 'string',
-                default: 'Screenshot'
-            },
-            // Flag um zu vermerken, ob Block bereits initialisiert wurde
-            _initialized: {
-                type: 'boolean',
-                default: false
+            // Feature-spezifische Attribute
+            features: {
+                type: 'object',
+                default: {
+                    icon: {
+                        enabled: false,
+                        value: 'dashicons-admin-generic'
+                    },
+                    collapse: {
+                        enabled: false,
+                        defaultState: 'expanded', // 'expanded' oder 'collapsed'
+                        showInEditor: false // Neu: Zeige Collapse-Zustand im Editor
+                    },
+                    numbering: {
+                        enabled: false,
+                        format: 'numeric'
+                    },
+                    copyText: {
+                        enabled: false,
+                        buttonText: __('Text kopieren', 'container-block-designer')
+                    },
+                    screenshot: {
+                        enabled: false,
+                        buttonText: __('Screenshot', 'container-block-designer')
+                    }
+                }
             }
         },
         
         edit: function(props) {
-            const { attributes, setAttributes, clientId } = props;
-            const { 
-                selectedBlock, 
-                customClasses, 
-                enableIcon, 
-                iconValue, 
-                enableCollapse, 
-                collapseDefault,
-                enableNumbering,
-                numberingFormat,
-                enableCopyText,
-                copyButtonText,
-                enableScreenshot,
-                screenshotButtonText,
-                _initialized
-            } = attributes;
-            
+            const { attributes, setAttributes } = props;
+            const { selectedBlock, customClasses, features } = attributes;
             const [availableBlocks, setAvailableBlocks] = useState([]);
-            const [blockConfig, setBlockConfig] = useState({});
-            const [globalSettings, setGlobalSettings] = useState(null);
-            const [isLoading, setIsLoading] = useState(true);
+            const [isCollapsedInEditor, setIsCollapsedInEditor] = useState(features.collapse.defaultState === 'collapsed');
             
-            // Load available blocks and global settings
+            // Lade verfügbare Blöcke
             useEffect(() => {
-                const loadData = async () => {
-                    try {
-                        // Load available blocks
-                        if (window.cbdData && window.cbdData.blocks) {
-                            setAvailableBlocks(window.cbdData.blocks);
-                        }
-                        
-                        // Load global settings
-                        if (window.cbdData && window.cbdData.apiUrl) {
-                            try {
-                                const response = await fetch(window.cbdData.apiUrl + 'global-settings');
-                                if (response.ok) {
-                                    const settings = await response.json();
-                                    setGlobalSettings(settings);
-                                    
-                                    // Apply global defaults if block is not yet initialized
-                                    if (!_initialized && settings) {
-                                        applyGlobalDefaults(settings);
-                                    }
-                                }
-                            } catch (error) {
-                                console.warn('Could not load global settings:', error);
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('Could not load data:', error);
-                    } finally {
-                        setIsLoading(false);
-                    }
-                };
-                
-                loadData();
+                if (window.cbdData && window.cbdData.blocks) {
+                    setAvailableBlocks(window.cbdData.blocks);
+                }
             }, []);
             
-            // Apply global defaults to new blocks
-            const applyGlobalDefaults = (settings) => {
-                if (_initialized || !settings || !settings.features) return;
-                
-                const updates = {
-                    _initialized: true
+            // Update features helper
+            const updateFeature = (featureName, updates) => {
+                const newFeatures = {
+                    ...features,
+                    [featureName]: {
+                        ...features[featureName],
+                        ...updates
+                    }
                 };
-                
-                // Apply global defaults for each feature
-                if (settings.features.icon && settings.features.icon.enabled_by_default) {
-                    updates.enableIcon = true;
-                    updates.iconValue = settings.features.icon.default_value;
-                }
-                
-                if (settings.features.collapse && settings.features.collapse.enabled_by_default) {
-                    updates.enableCollapse = true;
-                    updates.collapseDefault = settings.features.collapse.default_state;
-                }
-                
-                if (settings.features.numbering && settings.features.numbering.enabled_by_default) {
-                    updates.enableNumbering = true;
-                    updates.numberingFormat = settings.features.numbering.default_format;
-                }
-                
-                if (settings.features.copyText && settings.features.copyText.enabled_by_default) {
-                    updates.enableCopyText = true;
-                    updates.copyButtonText = settings.features.copyText.default_button_text;
-                }
-                
-                if (settings.features.screenshot && settings.features.screenshot.enabled_by_default) {
-                    updates.enableScreenshot = true;
-                    updates.screenshotButtonText = settings.features.screenshot.default_button_text;
-                }
-                
-                setAttributes(updates);
+                setAttributes({ features: newFeatures });
             };
             
-            // Load block configuration when selectedBlock changes
-            useEffect(() => {
-                if (selectedBlock && availableBlocks.length > 0) {
-                    const blockData = availableBlocks.find(block => block.slug === selectedBlock);
-                    if (blockData && blockData.config) {
-                        try {
-                            const config = typeof blockData.config === 'string' 
-                                         ? JSON.parse(blockData.config) 
-                                         : blockData.config;
-                            setBlockConfig(config);
-                        } catch (error) {
-                            console.warn('Could not parse block config:', error);
-                            setBlockConfig({});
-                        }
-                    } else {
-                        setBlockConfig({});
-                    }
-                }
-            }, [selectedBlock, availableBlocks]);
+            // Toggle Editor-Collapse-Zustand
+            const toggleEditorCollapse = () => {
+                const newState = !isCollapsedInEditor;
+                setIsCollapsedInEditor(newState);
+                updateFeature('collapse', { 
+                    defaultState: newState ? 'collapsed' : 'expanded' 
+                });
+            };
             
-            // Get styles from block config
-            const styles = blockConfig.styles || {};
-            
-            // Generate container classes
+            // Container-Klassen generieren
             const containerClasses = [
                 'cbd-container',
                 selectedBlock ? `cbd-container-${selectedBlock}` : '',
                 customClasses,
-                enableIcon ? 'has-icon' : '',
-                enableCollapse ? 'has-collapse' : '',
-                enableNumbering ? 'has-numbering' : '',
-                (enableCopyText || enableScreenshot) ? 'has-action-buttons' : ''
+                // Feature-Klassen
+                features.icon.enabled ? 'has-icon' : '',
+                features.collapse.enabled ? 'has-collapse' : '',
+                features.numbering.enabled ? 'has-numbering' : '',
+                (features.copyText.enabled || features.screenshot.enabled) ? 'has-action-buttons' : ''
             ].filter(Boolean).join(' ');
             
-            // Inline styles from block configuration
-            let containerStyle = {};
+            const blockProps = useBlockProps({
+                className: containerClasses
+            });
             
-            if (styles.padding) {
-                containerStyle.padding = `${styles.padding.top || 20}px ${styles.padding.right || 20}px ${styles.padding.bottom || 20}px ${styles.padding.left || 20}px`;
-            }
-            
-            if (styles.background?.color) {
-                containerStyle.backgroundColor = styles.background.color;
-            }
-            
-            if (styles.text?.color) {
-                containerStyle.color = styles.text.color;
-            }
-            
-            if (styles.border) {
-                const border = styles.border;
-                if (border.width && border.color) {
-                    containerStyle.border = `${border.width}px solid ${border.color}`;
+            // Render Feature Buttons (nur wenn nicht collapsed oder wenn Editor-Preview)
+            const renderFeatureButtons = () => {
+                if (features.collapse.enabled && isCollapsedInEditor) {
+                    return null; // Keine Buttons bei eingeklapptem Zustand
                 }
-                if (border.radius) {
-                    containerStyle.borderRadius = `${border.radius}px`;
+                
+                const buttons = [];
+                
+                if (features.copyText.enabled) {
+                    buttons.push(
+                        <Button
+                            key="copy"
+                            variant="secondary"
+                            size="small"
+                            icon="clipboard"
+                            disabled
+                            className="cbd-preview-button"
+                        >
+                            {features.copyText.buttonText}
+                        </Button>
+                    );
                 }
-            }
-            
-            // Check if feature can be overridden
-            const canOverride = (featureName) => {
-                return !globalSettings || 
-                       !globalSettings.features || 
-                       !globalSettings.features[featureName] || 
-                       globalSettings.features[featureName].allow_override !== false;
+                
+                if (features.screenshot.enabled) {
+                    buttons.push(
+                        <Button
+                            key="screenshot"
+                            variant="secondary"
+                            size="small"
+                            icon="camera"
+                            disabled
+                            className="cbd-preview-button"
+                        >
+                            {features.screenshot.buttonText}
+                        </Button>
+                    );
+                }
+                
+                return buttons.length > 0 ? (
+                    <div className="cbd-feature-buttons-preview">
+                        {buttons}
+                    </div>
+                ) : null;
             };
             
             return (
-                wp.element.createElement(
-                    Fragment,
-                    null,
-                    
-                    // Inspector Controls
-                    wp.element.createElement(
-                        InspectorControls,
-                        null,
-                        
-                        // Block Settings Panel
-                        wp.element.createElement(
-                            PanelBody,
-                            {
-                                title: __('Block-Einstellungen', 'container-block-designer'),
-                                initialOpen: true
-                            },
-                            
-                            wp.element.createElement(SelectControl, {
-                                label: __('Container-Design', 'container-block-designer'),
-                                value: selectedBlock,
-                                options: [
+                <Fragment>
+                    <InspectorControls>
+                        {/* Block-Auswahl Panel */}
+                        <PanelBody title={__('Block-Einstellungen', 'container-block-designer')} initialOpen={true}>
+                            <SelectControl
+                                label={__('Container-Style', 'container-block-designer')}
+                                value={selectedBlock}
+                                options={[
                                     { label: __('Standard', 'container-block-designer'), value: '' },
                                     ...availableBlocks.map(block => ({
                                         label: block.name,
                                         value: block.slug
                                     }))
-                                ],
-                                onChange: (value) => setAttributes({ selectedBlock: value })
-                            }),
-                            
-                            wp.element.createElement(TextControl, {
-                                label: __('Custom CSS Classes', 'container-block-designer'),
-                                value: customClasses,
-                                onChange: (value) => setAttributes({ customClasses: value })
-                            })
-                        ),
+                                ]}
+                                onChange={(value) => setAttributes({ selectedBlock: value })}
+                            />
+                            <TextControl
+                                label={__('Custom CSS Classes', 'container-block-designer')}
+                                value={customClasses}
+                                onChange={(value) => setAttributes({ customClasses: value })}
+                            />
+                        </PanelBody>
                         
-                        // Features Panel
-                        wp.element.createElement(
-                            PanelBody,
-                            {
-                                title: __('Features', 'container-block-designer'),
-                                initialOpen: false
-                            },
+                        {/* Features Panel */}
+                        <PanelBody title={__('Features', 'container-block-designer')} initialOpen={false}>
                             
-                            // Global settings info
-                            globalSettings && wp.element.createElement(
-                                Notice,
-                                { 
-                                    status: 'info',
-                                    isDismissible: false,
-                                    className: 'cbd-global-settings-notice'
-                                },
-                                wp.element.createElement(
-                                    'p',
-                                    { style: { margin: 0, fontSize: '12px' } },
-                                    __('🌐 Globale Standardwerte sind aktiv. Sie können diese hier überschreiben.', 'container-block-designer')
-                                )
-                            ),
+                            {/* Icon Feature */}
+                            <BaseControl label={__('Block Icon', 'container-block-designer')}>
+                                <ToggleControl
+                                    checked={features.icon.enabled}
+                                    onChange={(enabled) => updateFeature('icon', { enabled })}
+                                />
+                                {features.icon.enabled && (
+                                    <SelectControl
+                                        label={__('Icon auswählen', 'container-block-designer')}
+                                        value={features.icon.value}
+                                        options={DASHICON_OPTIONS}
+                                        onChange={(value) => updateFeature('icon', { value })}
+                                    />
+                                )}
+                            </BaseControl>
                             
-                            // Icon Feature
-                            wp.element.createElement(
-                                BaseControl,
-                                { label: __('Block Icon', 'container-block-designer') },
-                                
-                                canOverride('icon') ? [
-                                    wp.element.createElement(ToggleControl, {
-                                        key: 'icon-toggle',
-                                        checked: enableIcon || false,
-                                        onChange: (value) => setAttributes({ enableIcon: value })
-                                    }),
-                                    
-                                    (enableIcon || false) && wp.element.createElement(SelectControl, {
-                                        key: 'icon-select',
-                                        label: __('Icon auswählen', 'container-block-designer'),
-                                        value: iconValue,
-                                        options: DASHICON_OPTIONS,
-                                        onChange: (value) => setAttributes({ iconValue: value })
-                                    })
-                                ] : wp.element.createElement(
-                                    Notice,
-                                    { status: 'warning', isDismissible: false },
-                                    __('Durch globale Einstellungen gesperrt', 'container-block-designer')
-                                )
-                            ),
+                            {/* Collapse Feature */}
+                            <BaseControl label={__('Ein-/Ausklappbar', 'container-block-designer')}>
+                                <ToggleControl
+                                    checked={features.collapse.enabled}
+                                    onChange={(enabled) => updateFeature('collapse', { enabled })}
+                                />
+                                {features.collapse.enabled && (
+                                    <Fragment>
+                                        <SelectControl
+                                            label={__('Standard-Zustand', 'container-block-designer')}
+                                            value={features.collapse.defaultState}
+                                            options={[
+                                                { label: __('Ausgeklappt', 'container-block-designer'), value: 'expanded' },
+                                                { label: __('Eingeklappt', 'container-block-designer'), value: 'collapsed' }
+                                            ]}
+                                            onChange={(value) => {
+                                                updateFeature('collapse', { defaultState: value });
+                                                setIsCollapsedInEditor(value === 'collapsed');
+                                            }}
+                                        />
+                                        <BaseControl label={__('Editor-Vorschau', 'container-block-designer')}>
+                                            <ButtonGroup>
+                                                <Button
+                                                    isPressed={!isCollapsedInEditor}
+                                                    onClick={() => {
+                                                        setIsCollapsedInEditor(false);
+                                                        updateFeature('collapse', { defaultState: 'expanded' });
+                                                    }}
+                                                >
+                                                    {__('Ausgeklappt', 'container-block-designer')}
+                                                </Button>
+                                                <Button
+                                                    isPressed={isCollapsedInEditor}
+                                                    onClick={() => {
+                                                        setIsCollapsedInEditor(true);
+                                                        updateFeature('collapse', { defaultState: 'collapsed' });
+                                                    }}
+                                                >
+                                                    {__('Eingeklappt', 'container-block-designer')}
+                                                </Button>
+                                            </ButtonGroup>
+                                        </BaseControl>
+                                    </Fragment>
+                                )}
+                            </BaseControl>
                             
-                            // Collapse Feature
-                            wp.element.createElement(
-                                BaseControl,
-                                { label: __('Ein-/Ausklappbar', 'container-block-designer') },
-                                
-                                canOverride('collapse') ? [
-                                    wp.element.createElement(ToggleControl, {
-                                        key: 'collapse-toggle',
-                                        checked: enableCollapse || false,
-                                        onChange: (value) => setAttributes({ enableCollapse: value })
-                                    }),
-                                    
-                                    (enableCollapse || false) && wp.element.createElement(SelectControl, {
-                                        key: 'collapse-select',
-                                        label: __('Standard-Zustand', 'container-block-designer'),
-                                        value: collapseDefault,
-                                        options: [
-                                            { label: __('Ausgeklappt', 'container-block-designer'), value: 'expanded' },
-                                            { label: __('Eingeklappt', 'container-block-designer'), value: 'collapsed' }
-                                        ],
-                                        onChange: (value) => setAttributes({ collapseDefault: value })
-                                    })
-                                ] : wp.element.createElement(
-                                    Notice,
-                                    { status: 'warning', isDismissible: false },
-                                    __('Durch globale Einstellungen gesperrt', 'container-block-designer')
-                                )
-                            ),
-                            
-                            // Numbering Feature - NEU HINZUGEFÜGT
-                            wp.element.createElement(
-                                BaseControl,
-                                { label: __('Nummerierung', 'container-block-designer') },
-                                
-                                canOverride('numbering') ? [
-                                    wp.element.createElement(ToggleControl, {
-                                        key: 'numbering-toggle',
-                                        checked: enableNumbering || false,
-                                        onChange: (value) => setAttributes({ enableNumbering: value })
-                                    }),
-                                    
-                                    (enableNumbering || false) && wp.element.createElement(SelectControl, {
-                                        key: 'numbering-select',
-                                        label: __('Nummerierungs-Format', 'container-block-designer'),
-                                        value: numberingFormat,
-                                        options: [
+                            {/* Numbering Feature */}
+                            <BaseControl label={__('Nummerierung', 'container-block-designer')}>
+                                <ToggleControl
+                                    checked={features.numbering.enabled}
+                                    onChange={(enabled) => updateFeature('numbering', { enabled })}
+                                />
+                                {features.numbering.enabled && (
+                                    <SelectControl
+                                        label={__('Nummerierungs-Format', 'container-block-designer')}
+                                        value={features.numbering.format}
+                                        options={[
                                             { label: __('Numerisch (1, 2, 3)', 'container-block-designer'), value: 'numeric' },
                                             { label: __('Alphabetisch (A, B, C)', 'container-block-designer'), value: 'alpha' },
                                             { label: __('Römisch (I, II, III)', 'container-block-designer'), value: 'roman' }
-                                        ],
-                                        onChange: (value) => setAttributes({ numberingFormat: value })
-                                    })
-                                ] : wp.element.createElement(
-                                    Notice,
-                                    { status: 'warning', isDismissible: false },
-                                    __('Durch globale Einstellungen gesperrt', 'container-block-designer')
-                                )
-                            ),
+                                        ]}
+                                        onChange={(value) => updateFeature('numbering', { format: value })}
+                                    />
+                                )}
+                            </BaseControl>
                             
-                            // Copy Text Feature
-                            wp.element.createElement(
-                                BaseControl,
-                                { label: __('Text kopieren', 'container-block-designer') },
-                                
-                                canOverride('copyText') ? [
-                                    wp.element.createElement(ToggleControl, {
-                                        key: 'copy-toggle',
-                                        checked: enableCopyText || false,
-                                        onChange: (value) => setAttributes({ enableCopyText: value })
-                                    }),
-                                    
-                                    (enableCopyText || false) && wp.element.createElement(TextControl, {
-                                        key: 'copy-text',
-                                        label: __('Button-Text', 'container-block-designer'),
-                                        value: copyButtonText,
-                                        onChange: (value) => setAttributes({ copyButtonText: value })
-                                    })
-                                ] : wp.element.createElement(
-                                    Notice,
-                                    { status: 'warning', isDismissible: false },
-                                    __('Durch globale Einstellungen gesperrt', 'container-block-designer')
-                                )
-                            ),
+                            {/* Copy Text Feature */}
+                            <BaseControl label={__('Text kopieren', 'container-block-designer')}>
+                                <ToggleControl
+                                    checked={features.copyText.enabled}
+                                    onChange={(enabled) => updateFeature('copyText', { enabled })}
+                                />
+                                {features.copyText.enabled && (
+                                    <TextControl
+                                        label={__('Button-Text', 'container-block-designer')}
+                                        value={features.copyText.buttonText}
+                                        onChange={(buttonText) => updateFeature('copyText', { buttonText })}
+                                    />
+                                )}
+                            </BaseControl>
                             
-                            // Screenshot Feature
-                            wp.element.createElement(
-                                BaseControl,
-                                { label: __('Screenshot', 'container-block-designer') },
-                                
-                                canOverride('screenshot') ? [
-                                    wp.element.createElement(ToggleControl, {
-                                        key: 'screenshot-toggle',
-                                        checked: enableScreenshot || false,
-                                        onChange: (value) => setAttributes({ enableScreenshot: value })
-                                    }),
-                                    
-                                    (enableScreenshot || false) && wp.element.createElement(TextControl, {
-                                        key: 'screenshot-text',
-                                        label: __('Button-Text', 'container-block-designer'),
-                                        value: screenshotButtonText,
-                                        onChange: (value) => setAttributes({ screenshotButtonText: value })
-                                    })
-                                ] : wp.element.createElement(
-                                    Notice,
-                                    { status: 'warning', isDismissible: false },
-                                    __('Durch globale Einstellungen gesperrt', 'container-block-designer')
-                                )
-                            )
-                        )
-                    ),
+                            {/* Screenshot Feature */}
+                            <BaseControl label={__('Screenshot', 'container-block-designer')}>
+                                <ToggleControl
+                                    checked={features.screenshot.enabled}
+                                    onChange={(enabled) => updateFeature('screenshot', { enabled })}
+                                />
+                                {features.screenshot.enabled && (
+                                    <TextControl
+                                        label={__('Button-Text', 'container-block-designer')}
+                                        value={features.screenshot.buttonText}
+                                        onChange={(buttonText) => updateFeature('screenshot', { buttonText })}
+                                    />
+                                )}
+                            </BaseControl>
+                            
+                        </PanelBody>
+                    </InspectorControls>
                     
-                    // Block Content
-                    wp.element.createElement(
-                        'div',
-                        {
-                            className: `wp-block-container-block-designer-container ${containerClasses}`,
-                            style: containerStyle,
-                            'data-block-type': selectedBlock,
-                            // Add data attributes for preview
-                            'data-icon': enableIcon ? 'true' : undefined,
-                            'data-icon-value': enableIcon ? iconValue : undefined,
-                            'data-collapse': enableCollapse ? 'true' : undefined,
-                            'data-collapse-default': enableCollapse ? collapseDefault : undefined,
-                            'data-numbering': enableNumbering ? 'true' : undefined,
-                            'data-numbering-format': enableNumbering ? numberingFormat : undefined
-                        },
+                    <div {...blockProps}>
+                        {/* Icon */}
+                        {features.icon.enabled && (
+                            <div className="cbd-container-icon">
+                                <span className={`dashicons ${features.icon.value}`}></span>
+                            </div>
+                        )}
                         
-                        // Icon Preview
-                        (enableIcon || false) && wp.element.createElement(
-                            'div',
-                            { 
-                                className: 'cbd-container-icon',
-                                style: { marginBottom: '15px' }
-                            },
-                            wp.element.createElement('span', {
-                                className: `dashicons ${iconValue}`,
-                                style: { fontSize: '24px', color: 'inherit' }
-                            })
-                        ),
+                        {/* Collapse Header (nur wenn Feature aktiv) */}
+                        {features.collapse.enabled && (
+                            <div className="cbd-collapse-header" onClick={toggleEditorCollapse}>
+                                <span className={`dashicons dashicons-arrow-${isCollapsedInEditor ? 'right' : 'down'}-alt2`}></span>
+                                <span className="cbd-collapse-title">
+                                    {__('Container Inhalt', 'container-block-designer')}
+                                </span>
+                                {/* Action Buttons im Collapse Header (nur bei collapsed) */}
+                                {isCollapsedInEditor && (
+                                    <div className="cbd-collapse-buttons">
+                                        {features.copyText.enabled && (
+                                            <Button 
+                                                variant="secondary" 
+                                                size="small" 
+                                                icon="clipboard"
+                                                disabled
+                                                className="cbd-preview-button"
+                                            />
+                                        )}
+                                        {features.screenshot.enabled && (
+                                            <Button 
+                                                variant="secondary" 
+                                                size="small" 
+                                                icon="camera"
+                                                disabled
+                                                className="cbd-preview-button"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         
-                        // Numbering Preview - NEU
-                        (enableNumbering || false) && wp.element.createElement(
-                            'div',
-                            {
-                                className: 'cbd-numbering-preview',
-                                style: {
-                                    position: 'absolute',
-                                    top: '15px',
-                                    left: '15px',
-                                    width: '30px',
-                                    height: '30px',
-                                    background: '#2271b1',
-                                    color: 'white',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold',
-                                    zIndex: '10'
-                                }
-                            },
-                            numberingFormat === 'alpha' ? 'A' :
-                            numberingFormat === 'roman' ? 'I' : '1'
-                        ),
-                        
-                        // Collapse Header Preview
-                        (enableCollapse || false) && wp.element.createElement(
-                            'div',
-                            {
-                                className: 'cbd-collapse-header-preview',
-                                style: {
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px',
-                                    padding: '10px',
-                                    backgroundColor: 'rgba(0,0,0,0.05)',
-                                    borderRadius: '4px',
-                                    marginBottom: '15px',
-                                    fontSize: '14px'
-                                }
-                            },
-                            wp.element.createElement('span', {
-                                className: `dashicons dashicons-arrow-${collapseDefault === 'collapsed' ? 'right' : 'down'}-alt2`,
-                                style: { fontSize: '16px' }
-                            }),
-                            wp.element.createElement('span', null, __('Container Inhalt', 'container-block-designer')),
-                            
-                            // Preview buttons in collapse header (when collapsed)
-                            collapseDefault === 'collapsed' && ((enableCopyText || false) || (enableScreenshot || false)) && 
-                            wp.element.createElement(
-                                'div',
-                                { 
-                                    style: { 
-                                        marginLeft: 'auto', 
-                                        display: 'flex', 
-                                        gap: '5px' 
-                                    } 
-                                },
-                                (enableCopyText || false) && wp.element.createElement(Button, {
-                                    variant: 'secondary',
-                                    size: 'small',
-                                    icon: 'clipboard',
-                                    disabled: true
-                                }),
-                                (enableScreenshot || false) && wp.element.createElement(Button, {
-                                    variant: 'secondary', 
-                                    size: 'small',
-                                    icon: 'camera',
-                                    disabled: true
-                                })
-                            )
-                        ),
-                        
-                        // Content Area (nur wenn nicht collapsed oder collapse deaktiviert)
-                        (!(enableCollapse || false) || collapseDefault === 'expanded') && wp.element.createElement(
-                            'div',
-                            { 
-                                className: 'cbd-container-content',
-                                style: enableNumbering && !enableCollapse ? { paddingLeft: '40px' } : {}
-                            },
-                            
-                            wp.element.createElement(InnerBlocks, {
-                                allowedBlocks: true,
-                                template: [
-                                    ['core/paragraph', {
-                                        placeholder: __('Fügen Sie hier Ihren Inhalt ein...', 'container-block-designer')
-                                    }]
-                                ]
-                            }),
-                            
-                            // Preview Action Buttons (nur wenn nicht collapsed)
-                            ((enableCopyText || false) || (enableScreenshot || false)) && wp.element.createElement(
-                                'div',
-                                {
-                                    className: 'cbd-action-buttons-preview',
-                                    style: {
-                                        marginTop: '15px',
-                                        display: 'flex',
-                                        gap: '8px',
-                                        justifyContent: 'flex-end'
-                                    }
-                                },
-                                (enableCopyText || false) && wp.element.createElement(Button, {
-                                    variant: 'secondary',
-                                    size: 'small', 
-                                    icon: 'clipboard',
-                                    disabled: true
-                                }, copyButtonText),
+                        {/* Content Area (nur anzeigen wenn nicht collapsed oder collapse deaktiviert) */}
+                        {(!features.collapse.enabled || !isCollapsedInEditor) && (
+                            <div className="cbd-container-content">
+                                <InnerBlocks
+                                    allowedBlocks={true}
+                                    template={[
+                                        ['core/paragraph', {
+                                            placeholder: __('Fügen Sie hier Ihren Inhalt ein...', 'container-block-designer')
+                                        }]
+                                    ]}
+                                />
                                 
-                                (enableScreenshot || false) && wp.element.createElement(Button, {
-                                    variant: 'secondary',
-                                    size: 'small',
-                                    icon: 'camera', 
-                                    disabled: true
-                                }, screenshotButtonText)
-                            )
-                        )
-                    )
-                )
+                                {/* Feature Buttons (nur bei nicht-collapsed) */}
+                                {renderFeatureButtons()}
+                            </div>
+                        )}
+                    </div>
+                </Fragment>
             );
         },
         
         save: function(props) {
             const { attributes } = props;
-            const { 
-                selectedBlock, 
-                customClasses,
-                enableIcon,
-                iconValue,
-                enableCollapse,
-                collapseDefault,
-                enableNumbering,
-                numberingFormat,
-                enableCopyText,
-                copyButtonText,
-                enableScreenshot,
-                screenshotButtonText
-            } = attributes;
+            const { selectedBlock, customClasses, features } = attributes;
             
-            // Generate container classes
+            // Container classes
             const containerClasses = [
                 'cbd-container',
                 selectedBlock ? `cbd-container-${selectedBlock}` : '',
                 customClasses
             ].filter(Boolean).join(' ');
             
-            // Build data attributes for JavaScript
-            const dataAttributes = {
-                'data-block-type': selectedBlock || undefined
-            };
+            // Data attributes für Features
+            const dataAttributes = {};
             
-            if (enableIcon) {
+            if (features.icon.enabled) {
                 dataAttributes['data-icon'] = 'true';
-                dataAttributes['data-icon-value'] = iconValue;
+                dataAttributes['data-icon-value'] = features.icon.value;
             }
             
-            if (enableCollapse) {
+            if (features.collapse.enabled) {
                 dataAttributes['data-collapse'] = 'true';
-                dataAttributes['data-collapse-default'] = collapseDefault;
+                dataAttributes['data-collapse-default'] = features.collapse.defaultState;
             }
             
-            if (enableNumbering) {
+            if (features.numbering.enabled) {
                 dataAttributes['data-numbering'] = 'true';
-                dataAttributes['data-numbering-format'] = numberingFormat;
+                dataAttributes['data-numbering-format'] = features.numbering.format;
             }
             
-            if (enableCopyText) {
+            if (features.copyText.enabled) {
                 dataAttributes['data-copy'] = 'true';
-                dataAttributes['data-copy-text'] = copyButtonText;
+                dataAttributes['data-copy-text'] = features.copyText.buttonText;
             }
             
-            if (enableScreenshot) {
+            if (features.screenshot.enabled) {
                 dataAttributes['data-screenshot'] = 'true';
-                dataAttributes['data-screenshot-text'] = screenshotButtonText;
+                dataAttributes['data-screenshot-text'] = features.screenshot.buttonText;
             }
             
-            return wp.element.createElement(
-                'div',
-                {
-                    className: containerClasses,
-                    ...dataAttributes
-                },
-                wp.element.createElement(InnerBlocks.Content)
+            const blockProps = useBlockProps.save({
+                className: containerClasses,
+                ...dataAttributes
+            });
+            
+            return (
+                <div {...blockProps}>
+                    <InnerBlocks.Content />
+                </div>
             );
-        },
-        
-        // Deprecated versions für Kompatibilität
-        deprecated: [
-            {
-                attributes: {
-                    selectedBlock: { type: 'string', default: '' },
-                    customClasses: { type: 'string', default: '' },
-                    blockConfig: { type: 'object', default: {} },
-                    enableIcon: { type: 'boolean', default: false },
-                    iconValue: { type: 'string', default: 'dashicons-admin-generic' },
-                    enableCollapse: { type: 'boolean', default: false },
-                    collapseDefault: { type: 'string', default: 'expanded' },
-                    enableCopyText: { type: 'boolean', default: false },
-                    copyButtonText: { type: 'string', default: 'Text kopieren' },
-                    enableScreenshot: { type: 'boolean', default: false },
-                    screenshotButtonText: { type: 'string', default: 'Screenshot' }
-                },
-                
-                save: function(props) {
-                    const { attributes } = props;
-                    const { selectedBlock, customClasses } = attributes;
-                    
-                    const containerClasses = [
-                        'cbd-container',
-                        selectedBlock ? `cbd-container-${selectedBlock}` : '',
-                        customClasses
-                    ].filter(Boolean).join(' ');
-                    
-                    return wp.element.createElement(
-                        'div',
-                        {
-                            className: containerClasses,
-                            'data-block-type': selectedBlock
-                        },
-                        wp.element.createElement(InnerBlocks.Content)
-                    );
-                },
-                
-                migrate: function(attributes) {
-                    return {
-                        ...attributes,
-                        enableNumbering: false,
-                        numberingFormat: 'numeric',
-                        _initialized: true
-                    };
-                }
-            }
-        ]
+        }
     });
     
-    console.log('✅ Container Block registered with global settings support');
-    
-})(window.wp, window.jQuery);
+})(window.wp);

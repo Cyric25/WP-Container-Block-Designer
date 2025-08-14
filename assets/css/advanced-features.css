@@ -1,10 +1,10 @@
 /**
  * Container Block Designer - Advanced Features Styles
- * Version: 2.4.0 - Komplette Korrektur für alle Features
+ * Version: 2.3.0 - Fixes duplicate button issue
  */
 
 /* ========================================
-   Reset und Base Styles
+   Base Container Styles
    ======================================== */
 
 .cbd-container {
@@ -15,20 +15,11 @@
     border-radius: 6px;
     background: #ffffff;
     transition: all 0.3s ease;
-    /* Reset counter für Nummerierung */
-    counter-reset: cbd-numbering;
 }
 
 .cbd-container:hover {
     border-color: #d0d0d0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Container-Gruppen für Nummerierungs-Reset */
-.cbd-container-group,
-.wp-block-group,
-.entry-content {
-    counter-reset: cbd-numbering;
 }
 
 /* ========================================
@@ -53,23 +44,23 @@
     height: 24px;
 }
 
-/* Icon in Collapse-Header */
-.cbd-collapse-header .cbd-container-icon {
+/* Icon in header variation */
+.cbd-container-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.cbd-container-header .cbd-container-icon {
     margin-bottom: 0;
-    margin-right: 10px;
-    width: 30px;
-    height: 30px;
     flex-shrink: 0;
 }
 
-.cbd-collapse-header .cbd-container-icon .dashicons {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-}
-
 /* ========================================
-   Feature 2: Collapse/Expand - FINAL FIX
+   Feature 2: Collapse/Expand - FIXED
    ======================================== */
 
 .cbd-container[data-collapse="true"] {
@@ -112,20 +103,7 @@
     color: #495057;
 }
 
-.cbd-collapse-content {
-    padding: 20px;
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    background: #ffffff;
-    transition: all 0.3s ease;
-}
-
-/* ========================================
-   CRITICAL: Button-Positionierung Final Fix
-   ======================================== */
-
-/* Alle Action-Buttons Base-Style */
+/* WICHTIG: Button-Positionierung bei Collapse */
 .cbd-action-buttons {
     display: flex;
     gap: 8px;
@@ -137,8 +115,6 @@
     margin-left: auto;
     opacity: 0;
     visibility: hidden;
-    max-height: 0;
-    overflow: hidden;
     transition: all 0.3s ease;
 }
 
@@ -148,7 +124,6 @@
     justify-content: flex-end;
     opacity: 1;
     visibility: visible;
-    max-height: 50px;
     transition: all 0.3s ease;
 }
 
@@ -159,25 +134,28 @@
 }
 
 /* ========================================
-   Collapse States - FINALE LÖSUNG
+   Collapse States - KRITISCHE FIXES
    ======================================== */
 
 /* Expanded State (Standard) */
 .cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-collapse-content {
     display: block;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    background: #ffffff;
     animation: cbd-slide-down 0.3s ease;
 }
 
 .cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-action-buttons-header {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    max-height: 0 !important;
+    opacity: 0;
+    visibility: hidden;
 }
 
 .cbd-container[data-collapse="true"]:not(.cbd-collapsed) .cbd-action-buttons-content {
-    opacity: 1 !important;
-    visibility: visible !important;
-    max-height: 50px !important;
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Collapsed State */
@@ -186,17 +164,13 @@
 }
 
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-header {
-    opacity: 1 !important;
-    visibility: visible !important;
-    max-height: 50px !important;
+    opacity: 1;
+    visibility: visible;
 }
 
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-content {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    max-height: 0 !important;
-    /* Wichtig: Verstecke auch den Container komplett */
-    display: none !important;
+    opacity: 0;
+    visibility: hidden;
 }
 
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-toggle {
@@ -206,62 +180,6 @@
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-header {
     border-radius: 6px;
     border-bottom: 1px solid #dee2e6;
-}
-
-/* ========================================
-   Feature 3: Nummerierung - REPARIERT
-   ======================================== */
-
-.cbd-container[data-numbering="true"] {
-    counter-increment: cbd-numbering;
-    position: relative;
-}
-
-.cbd-container[data-numbering="true"]:before {
-    content: counter(cbd-numbering);
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    width: 30px;
-    height: 30px;
-    background: #2271b1;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    z-index: 10;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* Alphabetic numbering */
-.cbd-container[data-numbering-format="alpha"]:before {
-    content: counter(cbd-numbering, upper-alpha);
-}
-
-/* Roman numbering */
-.cbd-container[data-numbering-format="roman"]:before {
-    content: counter(cbd-numbering, upper-roman);
-}
-
-/* Nummerierung mit Collapse-Feature */
-.cbd-container[data-numbering="true"][data-collapse="true"]:before {
-    top: 50%;
-    left: -15px;
-    transform: translateY(-50%);
-    z-index: 20;
-}
-
-/* Padding-Adjustments für Nummerierung */
-.cbd-container[data-numbering="true"]:not([data-collapse="true"]) {
-    padding-left: 60px;
-}
-
-/* Nummerierung in Collapse-Header */
-.cbd-container[data-numbering="true"][data-collapse="true"] .cbd-collapse-header {
-    padding-left: 25px;
 }
 
 /* ========================================
@@ -281,8 +199,6 @@
     text-decoration: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-family: inherit;
-    line-height: 1;
 }
 
 .cbd-action-buttons button:hover {
@@ -303,48 +219,72 @@
     height: 16px;
 }
 
-/* Button States */
-.cbd-copy-button.success,
-.cbd-copy-button.copied {
-    background: #00a32a;
-    border-color: #00a32a;
+/* Success state for copy button */
+.cbd-copy-button.success {
+    background: #28a745;
+    border-color: #28a745;
 }
 
-.cbd-copy-button.success:hover,
-.cbd-copy-button.copied:hover {
+.cbd-copy-button.success:hover {
     background: #218838;
     border-color: #218838;
 }
 
-.cbd-screenshot-button.processing,
-.cbd-copy-button.processing {
+/* Processing state */
+.cbd-action-buttons button:disabled,
+.cbd-action-buttons button.processing {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
 }
 
-.cbd-action-buttons button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
+/* ========================================
+   Feature 3: Numbering
+   ======================================== */
+
+.cbd-container[data-numbering="true"] {
+    counter-increment: cbd-counter;
+    position: relative;
 }
 
-/* Buttons in Header (kleinere Version) */
-.cbd-action-buttons-header button {
-    padding: 6px 10px;
-    font-size: 12px;
-}
-
-.cbd-action-buttons-header button .dashicons {
+.cbd-container[data-numbering="true"]:before {
+    content: counter(cbd-counter);
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 30px;
+    height: 30px;
+    background: #007cba;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
-    width: 14px;
-    height: 14px;
+    font-weight: bold;
+    z-index: 1;
+}
+
+/* Alphabetic numbering */
+.cbd-container[data-numbering-format="alpha"]:before {
+    content: counter(cbd-counter, upper-alpha);
+}
+
+/* Roman numbering */
+.cbd-container[data-numbering-format="roman"]:before {
+    content: counter(cbd-counter, upper-roman);
+}
+
+/* Reset counter for container groups */
+.cbd-container-group {
+    counter-reset: cbd-counter;
 }
 
 /* ========================================
    Editor Preview Styles
    ======================================== */
 
+/* Editor-spezifische Styles */
 .block-editor-block-list__layout .cbd-container {
     margin: 10px 0;
 }
@@ -352,7 +292,6 @@
 .cbd-preview-button {
     opacity: 0.7;
     pointer-events: none;
-    cursor: not-allowed;
 }
 
 .cbd-feature-buttons-preview {
@@ -373,18 +312,6 @@
     font-size: 12px;
 }
 
-.cbd-collapse-header-preview {
-    border: 1px dashed #ccd0d4 !important;
-    background: rgba(0, 123, 255, 0.05) !important;
-}
-
-.cbd-collapse-header-preview:before {
-    content: "Vorschau: ";
-    font-size: 11px;
-    opacity: 0.7;
-    margin-right: 5px;
-}
-
 /* ========================================
    Animations
    ======================================== */
@@ -397,7 +324,7 @@
     }
     to {
         opacity: 1;
-        max-height: 2000px;
+        max-height: 1000px;
         transform: translateY(0);
     }
 }
@@ -421,18 +348,6 @@
     .cbd-container {
         margin: 15px 0;
         padding: 15px;
-    }
-    
-    .cbd-container[data-numbering="true"]:not([data-collapse="true"]) {
-        padding-left: 50px;
-    }
-    
-    .cbd-container[data-numbering="true"]:before {
-        width: 25px;
-        height: 25px;
-        font-size: 12px;
-        top: 12px;
-        left: 12px;
     }
     
     .cbd-collapse-header {
@@ -463,18 +378,6 @@
 }
 
 @media (max-width: 480px) {
-    .cbd-container[data-numbering="true"]:not([data-collapse="true"]) {
-        padding-left: 45px;
-    }
-    
-    .cbd-container[data-numbering="true"]:before {
-        width: 20px;
-        height: 20px;
-        font-size: 11px;
-        top: 10px;
-        left: 10px;
-    }
-    
     .cbd-collapse-header {
         padding: 10px 12px;
     }
@@ -490,7 +393,7 @@
 }
 
 /* ========================================
-   Accessibility & High Contrast
+   Accessibility
    ======================================== */
 
 .cbd-collapse-header:focus {
@@ -503,7 +406,7 @@
     outline-offset: 2px;
 }
 
-/* High contrast mode */
+/* High contrast mode support */
 @media (prefers-contrast: high) {
     .cbd-container {
         border-width: 2px;
@@ -512,20 +415,14 @@
     .cbd-action-buttons button {
         border-width: 2px;
     }
-    
-    .cbd-container[data-numbering="true"]:before {
-        border: 2px solid #000;
-    }
 }
 
-/* Reduced motion */
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     .cbd-container,
     .cbd-collapse-header,
     .cbd-action-buttons button,
-    .cbd-collapse-toggle,
-    .cbd-action-buttons-header,
-    .cbd-action-buttons-content {
+    .cbd-collapse-toggle {
         transition: none;
     }
     
@@ -534,28 +431,4 @@
             transform: none;
         }
     }
-}
-
-/* ========================================
-   Debug Styles (Entwicklungs-Hilfe)
-   ======================================== */
-
-.cbd-debug .cbd-action-buttons-header {
-    border: 2px solid red !important;
-    background: rgba(255, 0, 0, 0.1) !important;
-}
-
-.cbd-debug .cbd-action-buttons-content {
-    border: 2px solid blue !important;
-    background: rgba(0, 0, 255, 0.1) !important;
-}
-
-.cbd-debug .cbd-action-buttons-default {
-    border: 2px solid green !important;
-    background: rgba(0, 255, 0, 0.1) !important;
-}
-
-/* Verstecke Debug-Styles standardmäßig */
-.cbd-debug {
-    display: none;
 }

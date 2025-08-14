@@ -3,7 +3,7 @@
  * Plugin Name:       Container Block Designer
  * Plugin URI:        https://example.com/container-block-designer
  * Description:       Visueller Designer für Container-Blöcke im Gutenberg Editor mit 5 erweiterten Features
- * Version:           2.4.0
+ * Version:           2.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Container Block Designer Team
@@ -25,7 +25,7 @@ if (defined('CBD_VERSION')) {
 }
 
 // Plugin constants
-define('CBD_VERSION', '2.4.0');
+define('CBD_VERSION', '2.3.0');
 define('CBD_FEATURES_VERSION', '2.0.0');
 define('CBD_PLUGIN_FILE', __FILE__);
 define('CBD_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -79,17 +79,16 @@ class ContainerBlockDesigner {
             require_once CBD_PLUGIN_DIR . 'includes/rest-api.php';
         }
         
-        // Database Fix
+        // Database Fix - NEU HINZUGEFÜGT
         if (file_exists(CBD_PLUGIN_DIR . 'includes/database-fix.php')) {
             require_once CBD_PLUGIN_DIR . 'includes/database-fix.php';
         }
 
-        // Quick Fix Tool
+        // Quick Fix Tool - NEU HINZUFÜGEN
         if (file_exists(CBD_PLUGIN_DIR . 'quickfix.php')) {
             require_once CBD_PLUGIN_DIR . 'quickfix.php';
         }
-        
-        // Localization fix
+        // Nach den anderen require_once Statements:
         if (file_exists(CBD_PLUGIN_DIR . 'includes/fix-localization.php')) {
            require_once CBD_PLUGIN_DIR . 'includes/fix-localization.php';
         }
@@ -97,11 +96,6 @@ class ContainerBlockDesigner {
         // AJAX URL sicherstellen
         if (file_exists(CBD_PLUGIN_DIR . 'includes/ensure-ajaxurl.php')) {
             require_once CBD_PLUGIN_DIR . 'includes/ensure-ajaxurl.php';
-        }
-
-        // Global Settings System laden - NEU in v2.4.0
-        if (file_exists(CBD_PLUGIN_DIR . 'includes/class-global-settings.php')) {
-            require_once CBD_PLUGIN_DIR . 'includes/class-global-settings.php';
         }
 
         // Admin includes
@@ -227,11 +221,6 @@ class ContainerBlockDesigner {
         if (class_exists('ContainerBlockDesigner\Admin\Admin_Features')) {
             ContainerBlockDesigner\Admin\Admin_Features::init();
         }
-        
-        // Global Settings System initialisieren - NEU in v2.4.0
-        if (class_exists('CBD_Global_Settings')) {
-            CBD_Global_Settings::init();
-        }
     }
     
     /**
@@ -317,62 +306,15 @@ class ContainerBlockDesigner {
                 'customClasses' => [
                     'type' => 'string',
                     'default' => ''
-                ],
-                // Neue Attribute für v2.4.0 Features
-                'enableIcon' => [
-                    'type' => 'boolean'
-                ],
-                'iconValue' => [
-                    'type' => 'string',
-                    'default' => 'dashicons-admin-generic'
-                ],
-                'enableCollapse' => [
-                    'type' => 'boolean'
-                ],
-                'collapseDefault' => [
-                    'type' => 'string',
-                    'default' => 'expanded'
-                ],
-                'enableNumbering' => [
-                    'type' => 'boolean'
-                ],
-                'numberingFormat' => [
-                    'type' => 'string',
-                    'default' => 'numeric'
-                ],
-                'enableCopyText' => [
-                    'type' => 'boolean'
-                ],
-                'copyButtonText' => [
-                    'type' => 'string',
-                    'default' => 'Text kopieren'
-                ],
-                'enableScreenshot' => [
-                    'type' => 'boolean'
-                ],
-                'screenshotButtonText' => [
-                    'type' => 'string',
-                    'default' => 'Screenshot'
-                ],
-                '_initialized' => [
-                    'type' => 'boolean',
-                    'default' => false
                 ]
             ]
         ]);
     }
     
     /**
-     * Render container block - VEREINFACHT für bessere Kompatibilität
+     * Render container block
      */
     public function render_container_block($attributes, $content) {
-        // Lass die neue Frontend-Renderer-Klasse das übernehmen
-        if (class_exists('CBD_Frontend_Renderer')) {
-            // Das wird vom render_block Filter in CBD_Frontend_Renderer übernommen
-            return $content;
-        }
-        
-        // Fallback für den Fall dass Frontend-Renderer nicht verfügbar ist
         $selected_block = isset($attributes['selectedBlock']) ? $attributes['selectedBlock'] : '';
         $custom_classes = $attributes['customClasses'] ?? '';
         
@@ -391,15 +333,41 @@ class ContainerBlockDesigner {
             return '<div class="cbd-container-error">' . __('Container Block nicht gefunden.', 'container-block-designer') . '</div>';
         }
         
+        $config = json_decode($block->config, true);
+        $features = json_decode($block->features, true);
+        
         // Build container classes
         $container_classes = array('cbd-container', 'cbd-' . esc_attr($selected_block));
         if (!empty($custom_classes)) {
             $container_classes[] = esc_attr($custom_classes);
         }
         
-        // Simple container output
+        // Start output
         $output = '<div class="' . implode(' ', $container_classes) . '" data-block-id="' . esc_attr($block->id) . '">';
+        
+        // Add features wrapper if any features are enabled
+        if ($features && is_array($features)) {
+            $has_features = false;
+            foreach ($features as $feature) {
+                if (isset($feature['enabled']) && $feature['enabled']) {
+                    $has_features = true;
+                    break;
+                }
+            }
+            
+            if ($has_features) {
+                $output .= '<div class="cbd-features-wrapper" data-features="' . esc_attr(json_encode($features)) . '">';
+            }
+        }
+        
+        // Add content
         $output .= '<div class="cbd-content">' . $content . '</div>';
+        
+        // Close features wrapper if needed
+        if (isset($has_features) && $has_features) {
+            $output .= '</div>';
+        }
+        
         $output .= '</div>';
         
         return $output;
@@ -426,20 +394,13 @@ class ContainerBlockDesigner {
             CBD_VERSION
         );
         
-        // Pass data to JavaScript mit Global Settings API-Endpunkt
-        $api_data = array(
+        // Pass data to JavaScript
+        wp_localize_script('cbd-container-block', 'cbdData', array(
             'apiUrl' => home_url('/wp-json/cbd/v1/'),
             'nonce' => wp_create_nonce('wp_rest'),
             'blocks' => $this->get_active_blocks_for_editor(),
             'pluginUrl' => CBD_PLUGIN_URL
-        );
-        
-        // Global Settings hinzufügen falls verfügbar
-        if (class_exists('CBD_Global_Settings')) {
-            $api_data['globalSettings'] = CBD_Global_Settings::get_settings();
-        }
-        
-        wp_localize_script('cbd-container-block', 'cbdData', $api_data);
+        ));
     }
     
     /**
@@ -459,11 +420,6 @@ class ContainerBlockDesigner {
      * Enqueue frontend assets
      */
     public function enqueue_frontend_assets() {
-        // Only load if our block is present
-        if (!has_block('container-block-designer/container')) {
-            return;
-        }
-        
         // Advanced features script
         wp_enqueue_script(
             'cbd-advanced-features',
@@ -668,13 +624,6 @@ class ContainerBlockDesigner {
      */
     public function output_dynamic_css() {
         global $wpdb;
-        
-        // Check if table exists first
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '" . CBD_TABLE_BLOCKS . "'");
-        if (!$table_exists) {
-            return;
-        }
-        
         $blocks = $wpdb->get_results("SELECT * FROM " . CBD_TABLE_BLOCKS . " WHERE status = 'active'");
         
         if (empty($blocks)) {
@@ -755,7 +704,7 @@ class ContainerBlockDesigner {
         }
         
         $blocks = $wpdb->get_results(
-            "SELECT id, name, slug, description, config, features FROM " . CBD_TABLE_BLOCKS . " WHERE status = 'active' ORDER BY name",
+            "SELECT id, name, slug, description FROM " . CBD_TABLE_BLOCKS . " WHERE status = 'active' ORDER BY name",
             ARRAY_A
         );
         
