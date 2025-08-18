@@ -1,35 +1,23 @@
-(function(wp) {
-    'use strict';
-    
+/**
+ * Container Block Designer - Gutenberg Block
+ * Version: 2.2.0 - Complete with all 5 features
+ */
+
+(function(wp, $) {
     const { registerBlockType } = wp.blocks;
-    const { InnerBlocks, InspectorControls, useBlockProps } = wp.blockEditor;
-    const { PanelBody, SelectControl, ToggleControl, BaseControl, ButtonGroup, Button } = wp.components;
+    const { InnerBlocks, InspectorControls, BlockControls, useBlockProps } = wp.blockEditor;
+    const { PanelBody, SelectControl, TextControl, Notice, Placeholder, Button, ToolbarGroup, ToolbarButton } = wp.components;
     const { Fragment, useState, useEffect } = wp.element;
     const { __ } = wp.i18n;
-    const { select } = wp.data;
+    const apiFetch = wp.apiFetch;
     
-    // WordPress Dashicons für Icon-Auswahl
-    const DASHICON_OPTIONS = [
-        { label: __('Standard', 'container-block-designer'), value: 'dashicons-admin-generic' },
-        { label: __('Info', 'container-block-designer'), value: 'dashicons-info' },
-        { label: __('Warnung', 'container-block-designer'), value: 'dashicons-warning' },
-        { label: __('Glühbirne', 'container-block-designer'), value: 'dashicons-lightbulb' },
-        { label: __('Stern', 'container-block-designer'), value: 'dashicons-star-filled' },
-        { label: __('Herz', 'container-block-designer'), value: 'dashicons-heart' },
-        { label: __('Pfeil rechts', 'container-block-designer'), value: 'dashicons-arrow-right-alt' },
-        { label: __('Pfeil down', 'container-block-designer'), value: 'dashicons-arrow-down-alt' },
-        { label: __('Kamera', 'container-block-designer'), value: 'dashicons-camera' },
-        { label: __('Clipboard', 'container-block-designer'), value: 'dashicons-clipboard' },
-        { label: __('Einstellungen', 'container-block-designer'), value: 'dashicons-admin-settings' },
-        { label: __('Layout', 'container-block-designer'), value: 'dashicons-layout' },
-    ];
-    
+    // Register the block
     registerBlockType('container-block-designer/container', {
-        title: __('Design Container', 'container-block-designer'),
-        icon: 'layout',
-        category: 'design',
+        title: __('Container Block', 'container-block-designer'),
         description: __('Ein anpassbarer Container-Block mit erweiterten Features', 'container-block-designer'),
-        
+        category: 'design',
+        icon: 'layout',
+        keywords: ['container', 'wrapper', 'section', 'layout', 'box'],
         attributes: {
             selectedBlock: {
                 type: 'string',
@@ -43,328 +31,456 @@
                 type: 'object',
                 default: {}
             },
-            // Feature-spezifische Attribute
-            features: {
+            blockFeatures: {
                 type: 'object',
-                default: {
-                    icon: {
-                        enabled: false,
-                        value: 'dashicons-admin-generic'
-                    },
-                    collapse: {
-                        enabled: false,
-                        defaultState: 'expanded', // 'expanded' oder 'collapsed'
-                        showInEditor: false // Neu: Zeige Collapse-Zustand im Editor
-                    },
-                    numbering: {
-                        enabled: false,
-                        format: 'numeric'
-                    },
-                    copyText: {
-                        enabled: false,
-                        buttonText: __('Text kopieren', 'container-block-designer')
-                    },
-                    screenshot: {
-                        enabled: false,
-                        buttonText: __('Screenshot', 'container-block-designer')
-                    }
-                }
+                default: {}
             }
+        },
+        supports: {
+            align: ['wide', 'full'],
+            html: false,
+            anchor: true,
+            customClassName: true
         },
         
         edit: function(props) {
-            const { attributes, setAttributes } = props;
-            const { selectedBlock, customClasses, features } = attributes;
+            const { attributes, setAttributes, clientId } = props;
+            const { selectedBlock, customClasses, blockConfig, blockFeatures } = attributes;
             const [availableBlocks, setAvailableBlocks] = useState([]);
-            const [isCollapsedInEditor, setIsCollapsedInEditor] = useState(features.collapse.defaultState === 'collapsed');
+            const [isLoading, setIsLoading] = useState(true);
+            const [selectedBlockData, setSelectedBlockData] = useState(null);
             
-            // Lade verfügbare Blöcke
+            // Load available blocks on mount
             useEffect(() => {
-                if (window.cbdData && window.cbdData.blocks) {
-                    setAvailableBlocks(window.cbdData.blocks);
-                }
+                loadAvailableBlocks();
             }, []);
             
-            // Update features helper
-            const updateFeature = (featureName, updates) => {
-                const newFeatures = {
-                    ...features,
-                    [featureName]: {
-                        ...features[featureName],
-                        ...updates
+            // Load available blocks from server
+            const loadAvailableBlocks = () => {
+                // Try REST API first
+                apiFetch({ 
+                    path: '/cbd/v1/blocks',
+                    method: 'GET'
+                }).then(blocks => {
+                    console.log('📦 Available blocks loaded:', blocks);
+                    setAvailableBlocks(blocks || []);
+                    setIsLoading(false);
+                    
+                    // Load data for selected block if exists
+                    if (selectedBlock && blocks) {
+                        const block = blocks.find(b => b.slug === selectedBlock);
+                        if (block) {
+                            loadBlockData(block.id);
+                        }
                     }
-                };
-                setAttributes({ features: newFeatures });
-            };
-            
-            // Toggle Editor-Collapse-Zustand
-            const toggleEditorCollapse = () => {
-                const newState = !isCollapsedInEditor;
-                setIsCollapsedInEditor(newState);
-                updateFeature('collapse', { 
-                    defaultState: newState ? 'collapsed' : 'expanded' 
+                }).catch(error => {
+                    console.error('REST API Error, trying AJAX:', error);
+                    // Fallback to AJAX if REST fails
+                    loadBlocksViaAjax();
                 });
             };
             
-            // Container-Klassen generieren
+            // Fallback: Load blocks via AJAX
+            const loadBlocksViaAjax = () => {
+                if ($ && window.cbdBlockData) {
+                    $.ajax({
+                        url: window.cbdBlockData.ajaxUrl || '/wp-admin/admin-ajax.php',
+                        method: 'POST',
+                        data: {
+                            action: 'cbd_get_blocks',
+                            nonce: window.cbdBlockData.nonce || ''
+                        },
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                setAvailableBlocks(response.data);
+                                setIsLoading(false);
+                                
+                                if (selectedBlock && response.data) {
+                                    const block = response.data.find(b => b.slug === selectedBlock);
+                                    if (block) {
+                                        loadBlockData(block.id);
+                                    }
+                                }
+                            }
+                        },
+                        error: function() {
+                            console.error('Failed to load blocks via AJAX');
+                            setIsLoading(false);
+                        }
+                    });
+                } else {
+                    setIsLoading(false);
+                }
+            };
+            
+            // Load complete block data including features
+            const loadBlockData = (blockId) => {
+                // Try custom endpoint first
+                apiFetch({
+                    path: `/cbd/v1/block/${blockId}`,
+                    method: 'GET'
+                }).then(data => {
+                    console.log('📋 Block data loaded:', data);
+                    processBlockData(data);
+                }).catch(error => {
+                    console.error('REST Error, trying AJAX:', error);
+                    // Fallback to AJAX
+                    loadBlockDataViaAjax(blockId);
+                });
+            };
+            
+            // Fallback: Load block data via AJAX
+            const loadBlockDataViaAjax = (blockId) => {
+                if ($ && window.cbdBlockData) {
+                    $.ajax({
+                        url: window.cbdBlockData.ajaxUrl || '/wp-admin/admin-ajax.php',
+                        method: 'POST',
+                        data: {
+                            action: 'cbd_get_block_data',
+                            block_id: blockId,
+                            nonce: window.cbdBlockData.nonce || ''
+                        },
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                processBlockData(response.data);
+                            }
+                        },
+                        error: function() {
+                            console.error('Failed to load block data via AJAX');
+                        }
+                    });
+                }
+            };
+            
+            // Process loaded block data
+            const processBlockData = (data) => {
+                setSelectedBlockData(data);
+                
+                // Parse and set features
+                if (data.features) {
+                    const features = typeof data.features === 'string' 
+                        ? JSON.parse(data.features) 
+                        : data.features;
+                    setAttributes({ blockFeatures: features });
+                    console.log('✅ Features loaded:', features);
+                }
+                
+                // Parse and set config
+                if (data.config) {
+                    const config = typeof data.config === 'string' 
+                        ? JSON.parse(data.config) 
+                        : data.config;
+                    setAttributes({ blockConfig: config });
+                }
+            };
+            
+            // Handle block selection change
+            const onBlockChange = (newBlockSlug) => {
+                setAttributes({ selectedBlock: newBlockSlug });
+                
+                if (newBlockSlug) {
+                    const block = availableBlocks.find(b => b.slug === newBlockSlug);
+                    if (block) {
+                        loadBlockData(block.id);
+                    }
+                } else {
+                    setSelectedBlockData(null);
+                    setAttributes({ 
+                        blockFeatures: {},
+                        blockConfig: {}
+                    });
+                }
+            };
+            
+            // Get active features list
+            const getActiveFeaturesList = () => {
+                const features = [];
+                
+                if (blockFeatures?.icon?.enabled) {
+                    features.push({
+                        name: __('Block-Icon', 'container-block-designer'),
+                        detail: blockFeatures.icon.value || 'dashicons-admin-generic'
+                    });
+                }
+                
+                if (blockFeatures?.collapse?.enabled) {
+                    features.push({
+                        name: __('Ein-/Ausklappbar', 'container-block-designer'),
+                        detail: blockFeatures.collapse.defaultState === 'collapsed' 
+                            ? __('Eingeklappt', 'container-block-designer')
+                            : __('Ausgeklappt', 'container-block-designer')
+                    });
+                }
+                
+                if (blockFeatures?.numbering?.enabled) {
+                    features.push({
+                        name: __('Nummerierung', 'container-block-designer'),
+                        detail: blockFeatures.numbering.format === 'alpha' ? 'A, B, C...' :
+                                blockFeatures.numbering.format === 'roman' ? 'I, II, III...' : '1, 2, 3...'
+                    });
+                }
+                
+                if (blockFeatures?.copyText?.enabled) {
+                    features.push({
+                        name: __('Text kopieren', 'container-block-designer'),
+                        detail: blockFeatures.copyText.buttonText || __('Text kopieren', 'container-block-designer')
+                    });
+                }
+                
+                if (blockFeatures?.screenshot?.enabled) {
+                    features.push({
+                        name: __('Screenshot', 'container-block-designer'),
+                        detail: blockFeatures.screenshot.buttonText || __('Screenshot', 'container-block-designer')
+                    });
+                }
+                
+                return features;
+            };
+            
+            // Generate container classes
             const containerClasses = [
                 'cbd-container',
                 selectedBlock ? `cbd-container-${selectedBlock}` : '',
-                customClasses,
-                // Feature-Klassen
-                features.icon.enabled ? 'has-icon' : '',
-                features.collapse.enabled ? 'has-collapse' : '',
-                features.numbering.enabled ? 'has-numbering' : '',
-                (features.copyText.enabled || features.screenshot.enabled) ? 'has-action-buttons' : ''
+                customClasses
             ].filter(Boolean).join(' ');
             
+            // Get styles from config
+            const styles = blockConfig?.styles || {};
+            const cssVars = {
+                '--cbd-padding-top': `${styles.padding?.top || 20}px`,
+                '--cbd-padding-right': `${styles.padding?.right || 20}px`,
+                '--cbd-padding-bottom': `${styles.padding?.bottom || 20}px`,
+                '--cbd-padding-left': `${styles.padding?.left || 20}px`,
+                '--cbd-background-color': styles.background?.color || '#ffffff',
+                '--cbd-text-color': styles.text?.color || '#000000',
+                '--cbd-text-alignment': styles.text?.alignment || 'left',
+                '--cbd-border-width': `${styles.border?.width || 0}px`,
+                '--cbd-border-color': styles.border?.color || '#dddddd',
+                '--cbd-border-radius': `${styles.border?.radius || 0}px`
+            };
+            
             const blockProps = useBlockProps({
-                className: containerClasses
+                className: containerClasses,
+                style: cssVars
             });
             
-            // Render Feature Buttons (nur wenn nicht collapsed oder wenn Editor-Preview)
-            const renderFeatureButtons = () => {
-                if (features.collapse.enabled && isCollapsedInEditor) {
-                    return null; // Keine Buttons bei eingeklapptem Zustand
-                }
-                
-                const buttons = [];
-                
-                if (features.copyText.enabled) {
-                    buttons.push(
-                        <Button
-                            key="copy"
-                            variant="secondary"
-                            size="small"
-                            icon="clipboard"
-                            disabled
-                            className="cbd-preview-button"
-                        >
-                            {features.copyText.buttonText}
-                        </Button>
-                    );
-                }
-                
-                if (features.screenshot.enabled) {
-                    buttons.push(
-                        <Button
-                            key="screenshot"
-                            variant="secondary"
-                            size="small"
-                            icon="camera"
-                            disabled
-                            className="cbd-preview-button"
-                        >
-                            {features.screenshot.buttonText}
-                        </Button>
-                    );
-                }
-                
-                return buttons.length > 0 ? (
-                    <div className="cbd-feature-buttons-preview">
-                        {buttons}
-                    </div>
-                ) : null;
-            };
+            const activeFeatures = getActiveFeaturesList();
             
             return (
                 <Fragment>
+                    <BlockControls>
+                        <ToolbarGroup>
+                            <ToolbarButton
+                                icon="admin-appearance"
+                                label={__('Container-Design auswählen', 'container-block-designer')}
+                                onClick={() => {
+                                    document.querySelector('.edit-post-sidebar')?.classList.add('is-open');
+                                }}
+                            />
+                        </ToolbarGroup>
+                    </BlockControls>
+                    
                     <InspectorControls>
-                        {/* Block-Auswahl Panel */}
-                        <PanelBody title={__('Block-Einstellungen', 'container-block-designer')} initialOpen={true}>
-                            <SelectControl
-                                label={__('Container-Style', 'container-block-designer')}
-                                value={selectedBlock}
-                                options={[
-                                    { label: __('Standard', 'container-block-designer'), value: '' },
-                                    ...availableBlocks.map(block => ({
-                                        label: block.name,
-                                        value: block.slug
-                                    }))
-                                ]}
-                                onChange={(value) => setAttributes({ selectedBlock: value })}
-                            />
-                            <TextControl
-                                label={__('Custom CSS Classes', 'container-block-designer')}
-                                value={customClasses}
-                                onChange={(value) => setAttributes({ customClasses: value })}
-                            />
+                        <PanelBody 
+                            title={__('Container-Einstellungen', 'container-block-designer')}
+                            initialOpen={true}
+                        >
+                            {isLoading ? (
+                                <p>{__('Lade verfügbare Blocks...', 'container-block-designer')}</p>
+                            ) : (
+                                <Fragment>
+                                    <SelectControl
+                                        label={__('Container-Design auswählen', 'container-block-designer')}
+                                        value={selectedBlock}
+                                        options={[
+                                            { label: __('-- Kein Design --', 'container-block-designer'), value: '' },
+                                            ...availableBlocks.map(block => ({
+                                                label: block.name,
+                                                value: block.slug
+                                            }))
+                                        ]}
+                                        onChange={onBlockChange}
+                                        help={selectedBlockData ? selectedBlockData.description : null}
+                                    />
+                                    
+                                    <TextControl
+                                        label={__('Zusätzliche CSS-Klassen', 'container-block-designer')}
+                                        value={customClasses}
+                                        onChange={(value) => setAttributes({ customClasses: value })}
+                                        help={__('Optionale CSS-Klassen für erweiterte Anpassungen', 'container-block-designer')}
+                                    />
+                                    
+                                    {selectedBlockData && (
+                                        <Notice 
+                                            status="info" 
+                                            isDismissible={false}
+                                        >
+                                            <strong>{selectedBlockData.name}</strong>
+                                            {selectedBlockData.description && (
+                                                <Fragment>
+                                                    <br />
+                                                    <small>{selectedBlockData.description}</small>
+                                                </Fragment>
+                                            )}
+                                        </Notice>
+                                    )}
+                                </Fragment>
+                            )}
                         </PanelBody>
                         
-                        {/* Features Panel */}
-                        <PanelBody title={__('Features', 'container-block-designer')} initialOpen={false}>
-                            
-                            {/* Icon Feature */}
-                            <BaseControl label={__('Block Icon', 'container-block-designer')}>
-                                <ToggleControl
-                                    checked={features.icon.enabled}
-                                    onChange={(enabled) => updateFeature('icon', { enabled })}
-                                />
-                                {features.icon.enabled && (
-                                    <SelectControl
-                                        label={__('Icon auswählen', 'container-block-designer')}
-                                        value={features.icon.value}
-                                        options={DASHICON_OPTIONS}
-                                        onChange={(value) => updateFeature('icon', { value })}
-                                    />
-                                )}
-                            </BaseControl>
-                            
-                            {/* Collapse Feature */}
-                            <BaseControl label={__('Ein-/Ausklappbar', 'container-block-designer')}>
-                                <ToggleControl
-                                    checked={features.collapse.enabled}
-                                    onChange={(enabled) => updateFeature('collapse', { enabled })}
-                                />
-                                {features.collapse.enabled && (
-                                    <Fragment>
-                                        <SelectControl
-                                            label={__('Standard-Zustand', 'container-block-designer')}
-                                            value={features.collapse.defaultState}
-                                            options={[
-                                                { label: __('Ausgeklappt', 'container-block-designer'), value: 'expanded' },
-                                                { label: __('Eingeklappt', 'container-block-designer'), value: 'collapsed' }
-                                            ]}
-                                            onChange={(value) => {
-                                                updateFeature('collapse', { defaultState: value });
-                                                setIsCollapsedInEditor(value === 'collapsed');
-                                            }}
-                                        />
-                                        <BaseControl label={__('Editor-Vorschau', 'container-block-designer')}>
-                                            <ButtonGroup>
-                                                <Button
-                                                    isPressed={!isCollapsedInEditor}
-                                                    onClick={() => {
-                                                        setIsCollapsedInEditor(false);
-                                                        updateFeature('collapse', { defaultState: 'expanded' });
-                                                    }}
-                                                >
-                                                    {__('Ausgeklappt', 'container-block-designer')}
-                                                </Button>
-                                                <Button
-                                                    isPressed={isCollapsedInEditor}
-                                                    onClick={() => {
-                                                        setIsCollapsedInEditor(true);
-                                                        updateFeature('collapse', { defaultState: 'collapsed' });
-                                                    }}
-                                                >
-                                                    {__('Eingeklappt', 'container-block-designer')}
-                                                </Button>
-                                            </ButtonGroup>
-                                        </BaseControl>
-                                    </Fragment>
-                                )}
-                            </BaseControl>
-                            
-                            {/* Numbering Feature */}
-                            <BaseControl label={__('Nummerierung', 'container-block-designer')}>
-                                <ToggleControl
-                                    checked={features.numbering.enabled}
-                                    onChange={(enabled) => updateFeature('numbering', { enabled })}
-                                />
-                                {features.numbering.enabled && (
-                                    <SelectControl
-                                        label={__('Nummerierungs-Format', 'container-block-designer')}
-                                        value={features.numbering.format}
-                                        options={[
-                                            { label: __('Numerisch (1, 2, 3)', 'container-block-designer'), value: 'numeric' },
-                                            { label: __('Alphabetisch (A, B, C)', 'container-block-designer'), value: 'alpha' },
-                                            { label: __('Römisch (I, II, III)', 'container-block-designer'), value: 'roman' }
-                                        ]}
-                                        onChange={(value) => updateFeature('numbering', { format: value })}
-                                    />
-                                )}
-                            </BaseControl>
-                            
-                            {/* Copy Text Feature */}
-                            <BaseControl label={__('Text kopieren', 'container-block-designer')}>
-                                <ToggleControl
-                                    checked={features.copyText.enabled}
-                                    onChange={(enabled) => updateFeature('copyText', { enabled })}
-                                />
-                                {features.copyText.enabled && (
-                                    <TextControl
-                                        label={__('Button-Text', 'container-block-designer')}
-                                        value={features.copyText.buttonText}
-                                        onChange={(buttonText) => updateFeature('copyText', { buttonText })}
-                                    />
-                                )}
-                            </BaseControl>
-                            
-                            {/* Screenshot Feature */}
-                            <BaseControl label={__('Screenshot', 'container-block-designer')}>
-                                <ToggleControl
-                                    checked={features.screenshot.enabled}
-                                    onChange={(enabled) => updateFeature('screenshot', { enabled })}
-                                />
-                                {features.screenshot.enabled && (
-                                    <TextControl
-                                        label={__('Button-Text', 'container-block-designer')}
-                                        value={features.screenshot.buttonText}
-                                        onChange={(buttonText) => updateFeature('screenshot', { buttonText })}
-                                    />
-                                )}
-                            </BaseControl>
-                            
-                        </PanelBody>
+                        {activeFeatures.length > 0 && (
+                            <PanelBody 
+                                title={`${__('Aktive Features', 'container-block-designer')} (${activeFeatures.length})`}
+                                initialOpen={false}
+                            >
+                                <div className="cbd-features-panel">
+                                    {activeFeatures.map((feature, index) => (
+                                        <div key={index} className="cbd-feature-item" style={{
+                                            padding: '8px 0',
+                                            borderBottom: index < activeFeatures.length - 1 ? '1px solid #e0e0e0' : 'none'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                                                <span style={{ color: '#00a32a', marginRight: '8px' }}>✅</span>
+                                                <strong style={{ fontSize: '13px' }}>{feature.name}</strong>
+                                            </div>
+                                            {feature.detail && (
+                                                <div style={{ marginLeft: '28px', fontSize: '12px', color: '#666' }}>
+                                                    {feature.detail}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    
+                                    <div style={{
+                                        marginTop: '12px',
+                                        padding: '8px',
+                                        background: '#f0f6fc',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        color: '#555'
+                                    }}>
+                                        {__('Features können im Admin-Bereich konfiguriert werden.', 'container-block-designer')}
+                                    </div>
+                                </div>
+                            </PanelBody>
+                        )}
                     </InspectorControls>
                     
                     <div {...blockProps}>
-                        {/* Icon */}
-                        {features.icon.enabled && (
-                            <div className="cbd-container-icon">
-                                <span className={`dashicons ${features.icon.value}`}></span>
-                            </div>
-                        )}
-                        
-                        {/* Collapse Header (nur wenn Feature aktiv) */}
-                        {features.collapse.enabled && (
-                            <div className="cbd-collapse-header" onClick={toggleEditorCollapse}>
-                                <span className={`dashicons dashicons-arrow-${isCollapsedInEditor ? 'right' : 'down'}-alt2`}></span>
-                                <span className="cbd-collapse-title">
-                                    {__('Container Inhalt', 'container-block-designer')}
-                                </span>
-                                {/* Action Buttons im Collapse Header (nur bei collapsed) */}
-                                {isCollapsedInEditor && (
-                                    <div className="cbd-collapse-buttons">
-                                        {features.copyText.enabled && (
-                                            <Button 
-                                                variant="secondary" 
-                                                size="small" 
-                                                icon="clipboard"
-                                                disabled
-                                                className="cbd-preview-button"
+                        {!selectedBlock ? (
+                            <Placeholder
+                                icon="layout"
+                                label={__('Container Block', 'container-block-designer')}
+                                instructions={__('Wählen Sie ein Container-Design aus den Block-Einstellungen.', 'container-block-designer')}
+                            >
+                                {!isLoading && availableBlocks.length === 0 && (
+                                    <Notice status="warning" isDismissible={false}>
+                                        {__('Keine aktiven Container-Designs gefunden. Bitte erstellen Sie zuerst ein Design im Admin-Bereich.', 'container-block-designer')}
+                                    </Notice>
+                                )}
+                            </Placeholder>
+                        ) : (
+                            <Fragment>
+                                {/* Feature Preview Header */}
+                                {(blockFeatures?.icon?.enabled || blockFeatures?.numbering?.enabled || blockFeatures?.collapse?.enabled) && (
+                                    <div className="cbd-block-header" style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        marginBottom: '15px',
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.02)',
+                                        borderRadius: '4px',
+                                        border: '1px solid rgba(0,0,0,0.05)'
+                                    }}>
+                                        {blockFeatures.icon?.enabled && (
+                                            <span 
+                                                className={`dashicons ${blockFeatures.icon.value || 'dashicons-admin-generic'}`}
+                                                style={{
+                                                    fontSize: '24px',
+                                                    width: '24px',
+                                                    height: '24px',
+                                                    marginRight: '10px',
+                                                    color: styles.text?.color || '#000'
+                                                }}
                                             />
                                         )}
-                                        {features.screenshot.enabled && (
-                                            <Button 
-                                                variant="secondary" 
-                                                size="small" 
-                                                icon="camera"
-                                                disabled
-                                                className="cbd-preview-button"
+                                        {blockFeatures.numbering?.enabled && (
+                                            <span style={{
+                                                fontWeight: 'bold',
+                                                fontSize: '18px',
+                                                marginRight: '10px',
+                                                color: styles.text?.color || '#000'
+                                            }}>
+                                                {blockFeatures.numbering.format === 'alpha' ? 'A.' :
+                                                 blockFeatures.numbering.format === 'roman' ? 'I.' : '1.'}
+                                            </span>
+                                        )}
+                                        <span style={{ 
+                                            flex: 1, 
+                                            fontSize: '14px', 
+                                            fontWeight: '500',
+                                            color: styles.text?.color || '#000'
+                                        }}>
+                                            {selectedBlockData?.name || selectedBlock}
+                                        </span>
+                                        {blockFeatures.collapse?.enabled && (
+                                            <span 
+                                                className="dashicons dashicons-arrow-down-alt2"
+                                                style={{
+                                                    fontSize: '20px',
+                                                    color: '#666',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title={__('Ein-/Ausklappbar', 'container-block-designer')}
                                             />
                                         )}
                                     </div>
                                 )}
-                            </div>
-                        )}
-                        
-                        {/* Content Area (nur anzeigen wenn nicht collapsed oder collapse deaktiviert) */}
-                        {(!features.collapse.enabled || !isCollapsedInEditor) && (
-                            <div className="cbd-container-content">
-                                <InnerBlocks
-                                    allowedBlocks={true}
-                                    template={[
-                                        ['core/paragraph', {
-                                            placeholder: __('Fügen Sie hier Ihren Inhalt ein...', 'container-block-designer')
-                                        }]
-                                    ]}
-                                />
                                 
-                                {/* Feature Buttons (nur bei nicht-collapsed) */}
-                                {renderFeatureButtons()}
-                            </div>
+                                {/* Inner Blocks Container */}
+                                <div className="cbd-block-content">
+                                    <InnerBlocks 
+                                        renderAppender={InnerBlocks.ButtonBlockAppender}
+                                        template={[
+                                            ['core/paragraph', { 
+                                                placeholder: __('Fügen Sie hier Ihren Inhalt ein...', 'container-block-designer')
+                                            }]
+                                        ]}
+                                    />
+                                </div>
+                                
+                                {/* Feature Action Buttons */}
+                                {(blockFeatures?.copyText?.enabled || blockFeatures?.screenshot?.enabled) && (
+                                    <div className="cbd-block-actions" style={{
+                                        display: 'flex',
+                                        gap: '10px',
+                                        marginTop: '15px',
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.02)',
+                                        borderRadius: '4px',
+                                        border: '1px solid rgba(0,0,0,0.05)'
+                                    }}>
+                                        {blockFeatures.copyText?.enabled && (
+                                            <Button
+                                                variant="secondary"
+                                                size="small"
+                                                icon="clipboard"
+                                            >
+                                                {blockFeatures.copyText.buttonText || __('Text kopieren', 'container-block-designer')}
+                                            </Button>
+                                        )}
+                                        {blockFeatures.screenshot?.enabled && (
+                                            <Button
+                                                variant="secondary"
+                                                size="small"
+                                                icon="camera"
+                                            >
+                                                {blockFeatures.screenshot.buttonText || __('Screenshot', 'container-block-designer')}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </Fragment>
                         )}
                     </div>
                 </Fragment>
@@ -373,46 +489,19 @@
         
         save: function(props) {
             const { attributes } = props;
-            const { selectedBlock, customClasses, features } = attributes;
+            const { selectedBlock, customClasses, blockConfig } = attributes;
             
-            // Container classes
+            // Generate container classes
             const containerClasses = [
                 'cbd-container',
                 selectedBlock ? `cbd-container-${selectedBlock}` : '',
                 customClasses
             ].filter(Boolean).join(' ');
             
-            // Data attributes für Features
-            const dataAttributes = {};
-            
-            if (features.icon.enabled) {
-                dataAttributes['data-icon'] = 'true';
-                dataAttributes['data-icon-value'] = features.icon.value;
-            }
-            
-            if (features.collapse.enabled) {
-                dataAttributes['data-collapse'] = 'true';
-                dataAttributes['data-collapse-default'] = features.collapse.defaultState;
-            }
-            
-            if (features.numbering.enabled) {
-                dataAttributes['data-numbering'] = 'true';
-                dataAttributes['data-numbering-format'] = features.numbering.format;
-            }
-            
-            if (features.copyText.enabled) {
-                dataAttributes['data-copy'] = 'true';
-                dataAttributes['data-copy-text'] = features.copyText.buttonText;
-            }
-            
-            if (features.screenshot.enabled) {
-                dataAttributes['data-screenshot'] = 'true';
-                dataAttributes['data-screenshot-text'] = features.screenshot.buttonText;
-            }
-            
-            const blockProps = useBlockProps.save({
+            // Save with data attributes for features
+            const blockProps = wp.blockEditor.useBlockProps.save({
                 className: containerClasses,
-                ...dataAttributes
+                'data-block-type': selectedBlock || undefined
             });
             
             return (
@@ -420,7 +509,52 @@
                     <InnerBlocks.Content />
                 </div>
             );
-        }
+        },
+        
+        // Deprecated versions for migration
+        deprecated: [
+            {
+                attributes: {
+                    selectedBlock: { type: 'string', default: '' },
+                    customClasses: { type: 'string', default: '' }
+                },
+                save: function(props) {
+                    const { attributes } = props;
+                    const { selectedBlock, customClasses } = attributes;
+                    const containerClasses = [
+                        'cbd-container',
+                        selectedBlock ? `cbd-container-${selectedBlock}` : '',
+                        customClasses
+                    ].filter(Boolean).join(' ');
+                    
+                    return wp.element.createElement(
+                        'div',
+                        {
+                            className: `wp-block-container-block-designer-container ${containerClasses}`,
+                            'data-block-type': selectedBlock
+                        },
+                        wp.element.createElement(InnerBlocks.Content)
+                    );
+                },
+                migrate: function(attributes) {
+                    return {
+                        ...attributes,
+                        blockConfig: {},
+                        blockFeatures: {}
+                    };
+                }
+            }
+        ]
     });
     
-})(window.wp);
+    // Add AJAX handler for getting blocks
+    if (!wp.data.select('core/editor')) {
+        // We're in the widget editor or elsewhere, provide fallback
+        wp.domReady(() => {
+            console.log('✅ Container Block registered with all 5 features support');
+        });
+    } else {
+        console.log('✅ Container Block registered with all 5 features support');
+    }
+    
+})(window.wp, window.jQuery);
