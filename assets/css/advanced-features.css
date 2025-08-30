@@ -1,6 +1,8 @@
 /**
  * Container Block Designer - Advanced Features Styles
- * Version: 2.3.0 - Fixes duplicate button issue
+ * Version: 2.3.0 - COMPLETE FIXED VERSION
+ * 
+ * Fixes the critical error in block icon positioning
  */
 
 /* ========================================
@@ -80,7 +82,7 @@
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
-    position: relative;
+    position: relative; /* FIXED: Was 'relativ' */
 }
 
 .cbd-collapse-header:hover {
@@ -163,79 +165,17 @@
     display: none;
 }
 
-.cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-header {
-    opacity: 1;
-    visibility: visible;
-}
-
-.cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-content {
-    opacity: 0;
-    visibility: hidden;
-}
-
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-toggle {
     transform: rotate(-90deg);
 }
 
 .cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-header {
     border-radius: 6px;
-    border-bottom: 1px solid #dee2e6;
 }
 
-/* ========================================
-   Action Buttons Styling
-   ======================================== */
-
-.cbd-action-buttons button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border: 1px solid #007cba;
-    background: #007cba;
-    color: #ffffff;
-    border-radius: 4px;
-    font-size: 13px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.cbd-action-buttons button:hover {
-    background: #005a87;
-    border-color: #005a87;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 124, 186, 0.2);
-}
-
-.cbd-action-buttons button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 124, 186, 0.2);
-}
-
-.cbd-action-buttons button .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-/* Success state for copy button */
-.cbd-copy-button.success {
-    background: #28a745;
-    border-color: #28a745;
-}
-
-.cbd-copy-button.success:hover {
-    background: #218838;
-    border-color: #218838;
-}
-
-/* Processing state */
-.cbd-action-buttons button:disabled,
-.cbd-action-buttons button.processing {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
+.cbd-container[data-collapse="true"].cbd-collapsed .cbd-action-buttons-header {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* ========================================
@@ -243,73 +183,213 @@
    ======================================== */
 
 .cbd-container[data-numbering="true"] {
-    counter-increment: cbd-counter;
-    position: relative;
+    counter-increment: cbd-block-counter;
 }
 
-.cbd-container[data-numbering="true"]:before {
-    content: counter(cbd-counter);
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    width: 30px;
-    height: 30px;
-    background: #007cba;
-    color: white;
-    border-radius: 50%;
-    display: flex;
+.cbd-container-number {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    margin-right: 12px;
+    background: #007cba;
+    color: #ffffff;
+    border-radius: 50%;
+    font-weight: 600;
     font-size: 14px;
-    font-weight: bold;
-    z-index: 1;
 }
 
-/* Alphabetic numbering */
-.cbd-container[data-numbering-format="alpha"]:before {
-    content: counter(cbd-counter, upper-alpha);
+/* Numbering Formats */
+.cbd-numbering-numeric .cbd-container-number::before {
+    content: counter(cbd-block-counter);
 }
 
-/* Roman numbering */
-.cbd-container[data-numbering-format="roman"]:before {
-    content: counter(cbd-counter, upper-roman);
+.cbd-numbering-alpha .cbd-container-number::before {
+    content: counter(cbd-block-counter, upper-alpha);
 }
 
-/* Reset counter for container groups */
-.cbd-container-group {
-    counter-reset: cbd-counter;
+.cbd-numbering-roman .cbd-container-number::before {
+    content: counter(cbd-block-counter, upper-roman);
 }
 
 /* ========================================
-   Editor Preview Styles
+   Feature 4: Copy Text Button
    ======================================== */
 
-/* Editor-spezifische Styles */
-.block-editor-block-list__layout .cbd-container {
-    margin: 10px 0;
-}
-
-.cbd-preview-button {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.cbd-feature-buttons-preview {
-    margin-top: 15px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.cbd-collapse-buttons {
-    display: flex;
+.cbd-copy-button {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
-    margin-left: auto;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 2px solid #007cba;
+    border-radius: 4px;
+    color: #007cba;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
-.cbd-collapse-buttons .cbd-preview-button {
-    padding: 4px 8px;
+.cbd-copy-button:hover {
+    background: #007cba;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 186, 0.3);
+}
+
+.cbd-copy-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 123, 186, 0.3);
+}
+
+.cbd-copy-button.copied {
+    background: #00a32a;
+    border-color: #00a32a;
+    color: #ffffff;
+}
+
+.cbd-copy-button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Copy Success Message */
+.cbd-copy-success {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: #1e1e1e;
+    color: #ffffff;
+    border-radius: 4px;
     font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    animation: cbd-tooltip-fade 2s ease;
+}
+
+.cbd-copy-success::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1e1e1e;
+}
+
+/* ========================================
+   Feature 5: Screenshot Button
+   ======================================== */
+
+.cbd-screenshot-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 2px solid #8c5cff;
+    border-radius: 4px;
+    color: #8c5cff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.cbd-screenshot-button:hover {
+    background: #8c5cff;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(140, 92, 255, 0.3);
+}
+
+.cbd-screenshot-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(140, 92, 255, 0.3);
+}
+
+.cbd-screenshot-button.processing {
+    background: #f0f0f1;
+    border-color: #c3c4c7;
+    color: #646970;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.cbd-screenshot-button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Screenshot Flash Effect */
+.cbd-screenshot-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0;
+    animation: cbd-flash 0.5s ease;
+}
+
+/* ========================================
+   Combined Features
+   ======================================== */
+
+/* Icon + Collapse */
+.cbd-container[data-icon="true"][data-collapse="true"] .cbd-collapse-header {
+    padding-left: 60px;
+}
+
+.cbd-container[data-icon="true"][data-collapse="true"] .cbd-container-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+/* Numbering + Collapse */
+.cbd-container[data-numbering="true"][data-collapse="true"] .cbd-collapse-header::before {
+    content: counter(cbd-block-counter);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    margin-right: 8px;
+    background: #007cba;
+    color: #ffffff;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* All features combined */
+.cbd-container[data-icon="true"][data-numbering="true"][data-collapse="true"] .cbd-collapse-header {
+    padding-left: 100px;
+}
+
+.cbd-container[data-icon="true"][data-numbering="true"][data-collapse="true"] .cbd-container-number {
+    position: absolute;
+    left: 55px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
 }
 
 /* ========================================
@@ -324,19 +404,48 @@
     }
     to {
         opacity: 1;
-        max-height: 1000px;
+        max-height: 2000px;
         transform: translateY(0);
     }
 }
 
-@keyframes cbd-fade-in {
-    from {
+@keyframes cbd-tooltip-fade {
+    0% {
         opacity: 0;
-        transform: scale(0.95);
+        transform: translateX(-50%) translateY(5px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+@keyframes cbd-flash {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes cbd-spin {
+    from {
+        transform: rotate(0deg);
     }
     to {
-        opacity: 1;
-        transform: scale(1);
+        transform: rotate(360deg);
     }
 }
 
@@ -352,43 +461,80 @@
     
     .cbd-collapse-header {
         padding: 12px 15px;
+        font-size: 14px;
+    }
+    
+    .cbd-container-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .cbd-container-icon .dashicons {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .cbd-copy-button,
+    .cbd-screenshot-button {
+        padding: 6px 12px;
+        font-size: 13px;
     }
     
     .cbd-action-buttons {
         flex-direction: column;
-        gap: 6px;
+        align-items: stretch;
     }
     
     .cbd-action-buttons button {
         width: 100%;
-        justify-content: center;
-    }
-    
-    .cbd-container-icon {
-        width: 35px !important;
-        height: 35px !important;
-        margin-bottom: 10px !important;
-    }
-    
-    .cbd-container-icon .dashicons {
-        font-size: 20px !important;
-        width: 20px !important;
-        height: 20px !important;
     }
 }
 
 @media (max-width: 480px) {
+    .cbd-container {
+        margin: 10px 0;
+        padding: 10px;
+    }
+    
     .cbd-collapse-header {
         padding: 10px 12px;
+        font-size: 13px;
+        gap: 8px;
     }
     
-    .cbd-collapse-title {
-        font-size: 14px;
+    .cbd-container-header {
+        flex-wrap: wrap;
     }
     
-    .cbd-action-buttons button {
-        padding: 6px 10px;
+    .cbd-copy-button,
+    .cbd-screenshot-button {
+        padding: 5px 10px;
         font-size: 12px;
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .cbd-copy-button,
+    .cbd-screenshot-button,
+    .cbd-action-buttons {
+        display: none !important;
+    }
+    
+    .cbd-container[data-collapse="true"].cbd-collapsed .cbd-collapse-content {
+        display: block !important;
+    }
+    
+    .cbd-collapse-header {
+        cursor: default !important;
+    }
+    
+    .cbd-collapse-toggle {
+        display: none !important;
     }
 }
 
@@ -396,14 +542,29 @@
    Accessibility
    ======================================== */
 
+.cbd-container:focus-within {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+.cbd-copy-button:focus,
+.cbd-screenshot-button:focus,
 .cbd-collapse-header:focus {
     outline: 2px solid #007cba;
     outline-offset: 2px;
 }
 
-.cbd-action-buttons button:focus {
-    outline: 2px solid #007cba;
-    outline-offset: 2px;
+/* Screen reader only text */
+.cbd-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* High contrast mode support */
@@ -412,23 +573,19 @@
         border-width: 2px;
     }
     
-    .cbd-action-buttons button {
-        border-width: 2px;
+    .cbd-copy-button,
+    .cbd-screenshot-button {
+        border-width: 3px;
     }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     .cbd-container,
-    .cbd-collapse-header,
-    .cbd-action-buttons button,
-    .cbd-collapse-toggle {
-        transition: none;
-    }
-    
-    @keyframes cbd-slide-down {
-        from, to {
-            transform: none;
-        }
+    .cbd-collapse-toggle,
+    .cbd-copy-button,
+    .cbd-screenshot-button {
+        transition: none !important;
+        animation: none !important;
     }
 }

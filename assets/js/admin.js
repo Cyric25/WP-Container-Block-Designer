@@ -1,45 +1,44 @@
 /**
  * Container Block Designer - Admin JavaScript
- * Version: 2.2.2 - Bugfix Release
- * Fixed: Event handler bindings for save, edit, delete, duplicate actions
+ * Version: 2.2.0
  */
 
 (function($) {
     'use strict';
-
-    const CBDAdmin = {
+    
+    // Debug mode
+    const DEBUG = true;
+    
+    /**
+     * Container Block Designer Admin
+     */
+    window.CBDAdmin = {
         
         /**
          * Initialize
          */
         init: function() {
-            console.log('🚀 CBD Admin initialization starting...');
+            console.log('🚀 Initializing CBD Admin...');
             
-            // Check if jQuery is loaded
+            // Check dependencies
             if (typeof $ === 'undefined') {
-                console.error('❌ jQuery is not loaded!');
+                console.error('❌ jQuery not found!');
                 return;
             }
             
-            // Check if cbdAdmin localization exists
+            // Setup AJAX defaults
+            if (typeof ajaxurl === 'undefined' && typeof cbdAdmin !== 'undefined') {
+                window.ajaxurl = cbdAdmin.ajaxUrl;
+            }
+            
+            // Initialize cbdAdmin if not exists
             if (typeof cbdAdmin === 'undefined') {
-                console.warn('⚠️ cbdAdmin localization object not found. Creating fallback...');
-                
-                // Try to get ajaxurl from different sources
-                let ajaxUrl = '';
-                if (typeof ajaxurl !== 'undefined') {
-                    ajaxUrl = ajaxurl;
-                } else if (typeof wp !== 'undefined' && wp.ajax && wp.ajax.settings && wp.ajax.settings.url) {
-                    ajaxUrl = wp.ajax.settings.url;
-                } else {
-                    ajaxUrl = '/wp-admin/admin-ajax.php';
-                }
-                
                 window.cbdAdmin = {
-                    ajaxUrl: ajaxUrl,
-                    nonce: $('#cbd_nonce').val() || $('input[name="cbd_nonce"]').val() || '',
+                    ajaxUrl: ajaxurl || '/wp-admin/admin-ajax.php',
+                    nonce: $('#cbd-nonce').val() || '',
                     strings: {
-                        confirmDelete: 'Sind Sie sicher, dass Sie diesen Block löschen möchten?',
+                        confirmDelete: 'Wirklich löschen?',
+                        confirmDuplicate: 'Block duplizieren?',
                         saving: 'Speichern...',
                         saved: 'Gespeichert!',
                         error: 'Ein Fehler ist aufgetreten.',
@@ -58,6 +57,9 @@
             this.initBulkActions();
             this.initSearch();
             
+            // Initialize tooltips only if available
+            this.initTooltips();
+            
             console.log('✅ CBD Admin initialized successfully');
         },
 
@@ -66,27 +68,27 @@
          */
         bindEvents: function() {
             const self = this;
-            console.log('📌 Binding event handlers...');
+            if (DEBUG) console.log('📌 Binding event handlers...');
             
-            // SAVE BUTTON - FIX für neuen Block
+            // SAVE BUTTON
             $(document).on('click', '#cbd-save-block, button[type="submit"][name="cbd-save-block"]', function(e) {
                 e.preventDefault();
-                console.log('💾 Save button clicked');
+                if (DEBUG) console.log('💾 Save button clicked');
                 self.saveBlock();
             });
             
-            // Alternative für Forms
+            // Form submit
             $(document).on('submit', '#cbd-block-form, form.cbd-block-form', function(e) {
                 e.preventDefault();
-                console.log('📝 Form submitted');
+                if (DEBUG) console.log('📝 Form submitted');
                 self.saveBlock();
             });
             
-            // DELETE - mit verbesserter Selektor-Kompatibilität
+            // DELETE
             $(document).on('click', '.cbd-delete-btn, a[data-action="delete"]', function(e) {
                 e.preventDefault();
                 const blockId = $(this).data('id') || $(this).data('block-id');
-                console.log('🗑️ Delete button clicked for block:', blockId);
+                if (DEBUG) console.log('🗑️ Delete button clicked for block:', blockId);
                 if (blockId) {
                     self.deleteBlock(blockId);
                 }
@@ -96,7 +98,7 @@
             $(document).on('click', '.cbd-toggle-status-btn, a[data-action="toggle-status"]', function(e) {
                 e.preventDefault();
                 const blockId = $(this).data('id') || $(this).data('block-id');
-                console.log('🔄 Toggle status clicked for block:', blockId);
+                if (DEBUG) console.log('🔄 Toggle status clicked for block:', blockId);
                 if (blockId) {
                     self.toggleStatus(blockId);
                 }
@@ -106,7 +108,7 @@
             $(document).on('click', '.cbd-duplicate-btn, a[data-action="duplicate"]', function(e) {
                 e.preventDefault();
                 const blockId = $(this).data('id') || $(this).data('block-id');
-                console.log('📋 Duplicate clicked for block:', blockId);
+                if (DEBUG) console.log('📋 Duplicate clicked for block:', blockId);
                 if (blockId) {
                     self.duplicateBlock(blockId);
                 }
@@ -114,11 +116,11 @@
             
             // EDIT - direkte Navigation
             $(document).on('click', '.cbd-edit-btn, a[data-action="edit"]', function(e) {
-                // Lass den normalen Link funktionieren, aber log es
-                console.log('✏️ Edit button clicked');
+                if (DEBUG) console.log('✏️ Edit button clicked');
+                // Let the normal link work
             });
             
-            // Features modal
+            // Features modal - wird von admin-features.js behandelt
             $(document).on('click', '.cbd-configure-features, .cbd-features-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -129,7 +131,7 @@
                 
                 const blockName = $(this).data('name') || $('#block-name').val() || 'Block';
                 
-                console.log('⚙️ Opening features modal for block:', {id: blockId, name: blockName});
+                if (DEBUG) console.log('⚙️ Opening features modal for block:', {id: blockId, name: blockName});
                 
                 if (blockId && blockId !== '0') {
                     self.openFeaturesModal(blockId, blockName);
@@ -138,108 +140,133 @@
                 }
             });
             
-            // Live Preview
-            $(document).on('input change', '.cbd-form-field input, .cbd-form-field textarea, .cbd-form-field select', function() {
-                self.updatePreview();
+            // Dismiss notices
+            $(document).on('click', '.cbd-notice .notice-dismiss', function() {
+                $(this).closest('.cbd-notice').fadeOut();
             });
             
-            // Generate slug from name
-            $(document).on('input', '#block-name', function() {
-                self.generateSlug();
-            });
-            
-            console.log('✅ Event handlers bound successfully');
+            if (DEBUG) console.log('✅ Event handlers bound');
         },
 
         /**
-         * Save block (create or update)
+         * Initialize tooltips - with fallback
+         */
+        initTooltips: function() {
+            // Check if jQuery UI tooltip is available
+            if ($.fn.tooltip) {
+                try {
+                    $('.cbd-tooltip').tooltip({
+                        position: {
+                            my: "center bottom-10",
+                            at: "center top",
+                            using: function(position, feedback) {
+                                $(this).css(position);
+                                $("<div>")
+                                    .addClass("arrow")
+                                    .addClass(feedback.vertical)
+                                    .addClass(feedback.horizontal)
+                                    .appendTo(this);
+                            }
+                        }
+                    });
+                    if (DEBUG) console.log('✅ Tooltips initialized');
+                } catch (e) {
+                    if (DEBUG) console.log('⚠️ Tooltip initialization failed:', e);
+                }
+            } else {
+                // Fallback: Use title attribute
+                if (DEBUG) console.log('ℹ️ jQuery UI Tooltip not available, using native tooltips');
+                $('.cbd-tooltip').each(function() {
+                    const $this = $(this);
+                    if (!$this.attr('title') && $this.data('tooltip')) {
+                        $this.attr('title', $this.data('tooltip'));
+                    }
+                });
+            }
+        },
+
+        /**
+         * Save block
          */
         saveBlock: function() {
             const self = this;
-            console.log('💾 Starting save process...');
+            if (DEBUG) console.log('💾 Saving block...');
             
-            // Get form values
-            const name = $('#block-name').val();
-            const slug = $('#block-slug').val();
-            const description = $('#block-description').val() || '';
-            const status = $('#block-status').val() || 'active';
+            // Get form data
+            const formData = {
+                action: 'cbd_save_block',
+                nonce: $('#cbd-nonce').val() || cbdAdmin.nonce,
+                block_id: $('#block-id').val() || '0',
+                block_name: $('#block-name').val(),
+                block_slug: $('#block-slug').val(),
+                block_description: $('#block-description').val(),
+                block_category: $('#block-category').val(),
+                block_icon: $('#block-icon').val(),
+                block_keywords: $('#block-keywords').val(),
+                block_status: $('#block-status').is(':checked') ? 1 : 0,
+                
+                // Style settings
+                background_color: $('#background-color').val(),
+                text_color: $('#text-color').val(),
+                border_style: $('#border-style').val(),
+                border_width: $('#border-width').val(),
+                border_color: $('#border-color').val(),
+                border_radius: $('#border-radius').val(),
+                padding: $('#padding').val(),
+                margin: $('#margin').val(),
+                custom_css: $('#custom-css').val()
+            };
             
-            // Validate
-            if (!name || !slug) {
-                self.showMessage('❌ Name und Slug sind erforderlich', 'error');
+            if (DEBUG) console.log('Form data:', formData);
+            
+            // Validate required fields
+            if (!formData.block_name) {
+                this.showMessage('❌ Bitte geben Sie einen Block-Namen ein.', 'error');
+                $('#block-name').focus();
                 return;
             }
             
-            // Collect styles data - mit Fallbacks
-            const styles = {
-                padding: {
-                    top: $('#padding-top').val() || 20,
-                    right: $('#padding-right').val() || 20,
-                    bottom: $('#padding-bottom').val() || 20,
-                    left: $('#padding-left').val() || 20
-                },
-                background: {
-                    color: $('#background-color').val() || '#ffffff'
-                },
-                text: {
-                    color: $('#text-color').val() || '#333333',
-                    alignment: $('#text-alignment').val() || 'left'
-                },
-                border: {
-                    width: $('#border-width').val() || 0,
-                    color: $('#border-color').val() || '#dddddd',
-                    radius: $('#border-radius').val() || 0
-                }
-            };
+            // Show saving state
+            const $saveBtn = $('#cbd-save-block');
+            const originalText = $saveBtn.text();
+            $saveBtn.text(cbdAdmin.strings.saving).prop('disabled', true);
             
-            // Check if we're updating or creating
-            const blockId = $('#block-id').val();
-            const action = blockId ? 'cbd_update_block' : 'cbd_save_block';
-            
-            console.log('📦 Preparing data:', {action, blockId, name, slug});
-            
-            // Prepare data
-            const data = {
-                action: action,
-                name: name,
-                slug: slug,
-                description: description,
-                status: status,
-                styles: styles,
-                nonce: cbdAdmin.nonce || $('#cbd_nonce').val() || ''
-            };
-            
-            // Add block_id for updates
-            if (blockId) {
-                data.block_id = blockId;
-            }
-            
-            // Show loading
-            const $button = $('#cbd-save-block, button[type="submit"]').first();
-            const originalText = $button.text();
-            $button.text(cbdAdmin.strings?.saving || 'Speichern...').prop('disabled', true);
-            
+            // AJAX save
             $.ajax({
-                url: cbdAdmin.ajaxUrl,
-                method: 'POST',
-                data: data,
+                url: cbdAdmin.ajaxUrl || ajaxurl,
+                type: 'POST',
+                data: formData,
                 success: function(response) {
-                    console.log('✅ Save response:', response);
+                    if (DEBUG) console.log('Save response:', response);
+                    
                     if (response.success) {
-                        self.showMessage('✅ ' + (cbdAdmin.strings?.saved || 'Gespeichert!'), 'success');
-                        // Redirect to blocks list after save
+                        // Update block ID if new block
+                        if (response.data && response.data.block_id) {
+                            $('#block-id').val(response.data.block_id);
+                            
+                            // Update URL if new block
+                            if (formData.block_id === '0') {
+                                const newUrl = cbdAdmin.blocksListUrl + '&action=edit&id=' + response.data.block_id;
+                                window.history.replaceState({}, '', newUrl);
+                            }
+                        }
+                        
+                        $saveBtn.text(cbdAdmin.strings.saved);
+                        self.showMessage('✅ ' + (response.data.message || 'Block erfolgreich gespeichert!'), 'success');
+                        
+                        // Reset button after delay
                         setTimeout(function() {
-                            window.location.href = cbdAdmin.blocksListUrl;
-                        }, 1000);
+                            $saveBtn.text(originalText).prop('disabled', false);
+                        }, 2000);
                     } else {
-                        self.showMessage('❌ ' + (response.data?.message || cbdAdmin.strings?.error || 'Fehler'), 'error');
-                        $button.text(originalText).prop('disabled', false);
+                        $saveBtn.text(originalText).prop('disabled', false);
+                        self.showMessage('❌ ' + (response.data || cbdAdmin.strings.error), 'error');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Save error:', {xhr, status, error});
-                    self.showMessage('❌ ' + (cbdAdmin.strings?.error || 'Ein Fehler ist aufgetreten'), 'error');
-                    $button.text(originalText).prop('disabled', false);
+                    console.error('Save error:', error);
+                    $saveBtn.text(originalText).prop('disabled', false);
+                    self.showMessage('❌ ' + cbdAdmin.strings.error, 'error');
                 }
             });
         },
@@ -248,39 +275,32 @@
          * Delete block
          */
         deleteBlock: function(blockId) {
-            if (!confirm(cbdAdmin.strings?.confirmDelete || 'Wirklich löschen?')) {
+            if (!confirm(cbdAdmin.strings.confirmDelete)) {
                 return;
             }
             
             const self = this;
-            console.log('🗑️ Deleting block:', blockId);
             
             $.ajax({
-                url: cbdAdmin.ajaxUrl,
-                method: 'POST',
+                url: cbdAdmin.ajaxUrl || ajaxurl,
+                type: 'POST',
                 data: {
                     action: 'cbd_delete_block',
                     block_id: blockId,
-                    nonce: cbdAdmin.nonce || ''
+                    nonce: cbdAdmin.nonce || $('#cbd-nonce').val()
                 },
                 success: function(response) {
-                    console.log('✅ Delete response:', response);
                     if (response.success) {
-                        // Remove the row from table
+                        // Remove row from table
                         $('tr[data-block-id="' + blockId + '"]').fadeOut(400, function() {
                             $(this).remove();
                         });
-                        // Also try alternative selectors
-                        $('.cbd-delete-btn[data-id="' + blockId + '"]').closest('tr').fadeOut(400, function() {
-                            $(this).remove();
-                        });
-                        self.showMessage('✅ Block gelöscht', 'success');
+                        self.showMessage('✅ Block erfolgreich gelöscht!', 'success');
                     } else {
-                        self.showMessage('❌ ' + (response.data?.message || 'Fehler beim Löschen'), 'error');
+                        self.showMessage('❌ ' + (response.data || 'Fehler beim Löschen'), 'error');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('❌ Delete error:', {xhr, status, error});
+                error: function() {
                     self.showMessage('❌ Fehler beim Löschen', 'error');
                 }
             });
@@ -291,41 +311,41 @@
          */
         toggleStatus: function(blockId) {
             const self = this;
-            const $button = $('.cbd-toggle-status-btn[data-id="' + blockId + '"]');
-            const currentStatus = $button.data('status') || 'active';
-            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            
-            console.log('🔄 Toggling status:', {blockId, from: currentStatus, to: newStatus});
+            const $row = $('tr[data-block-id="' + blockId + '"]');
+            const $statusBadge = $row.find('.cbd-status-badge');
+            const currentStatus = $statusBadge.hasClass('cbd-status-active') ? 1 : 0;
+            const newStatus = currentStatus ? 0 : 1;
             
             $.ajax({
-                url: cbdAdmin.ajaxUrl,
-                method: 'POST',
+                url: cbdAdmin.ajaxUrl || ajaxurl,
+                type: 'POST',
                 data: {
                     action: 'cbd_toggle_status',
                     block_id: blockId,
                     status: newStatus,
-                    nonce: cbdAdmin.nonce || ''
+                    nonce: cbdAdmin.nonce || $('#cbd-nonce').val()
                 },
                 success: function(response) {
-                    console.log('✅ Toggle response:', response);
                     if (response.success) {
-                        // Update button
-                        $button.data('status', newStatus);
-                        $button.text(newStatus === 'active' ? 'Deaktivieren' : 'Aktivieren');
-                        
-                        // Update status badge if exists
-                        const $badge = $button.closest('tr').find('.cbd-status-badge');
-                        $badge.removeClass('status-active status-inactive').addClass('status-' + newStatus);
-                        $badge.text(newStatus === 'active' ? 'Aktiv' : 'Inaktiv');
-                        
-                        self.showMessage('✅ Status aktualisiert', 'success');
+                        // Update UI
+                        if (newStatus) {
+                            $statusBadge
+                                .removeClass('cbd-status-inactive')
+                                .addClass('cbd-status-active')
+                                .text(cbdAdmin.strings.active);
+                        } else {
+                            $statusBadge
+                                .removeClass('cbd-status-active')
+                                .addClass('cbd-status-inactive')
+                                .text(cbdAdmin.strings.inactive);
+                        }
+                        self.showMessage('✅ Status erfolgreich geändert!', 'success');
                     } else {
-                        self.showMessage('❌ ' + (response.data?.message || 'Fehler'), 'error');
+                        self.showMessage('❌ Fehler beim Ändern des Status', 'error');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('❌ Toggle error:', {xhr, status, error});
-                    self.showMessage('❌ Fehler beim Statuswechsel', 'error');
+                error: function() {
+                    self.showMessage('❌ Fehler beim Ändern des Status', 'error');
                 }
             });
         },
@@ -334,41 +354,41 @@
          * Duplicate block
          */
         duplicateBlock: function(blockId) {
+            if (!confirm(cbdAdmin.strings.confirmDuplicate || 'Block duplizieren?')) {
+                return;
+            }
+            
             const self = this;
-            console.log('📋 Duplicating block:', blockId);
             
             $.ajax({
-                url: cbdAdmin.ajaxUrl,
-                method: 'POST',
+                url: cbdAdmin.ajaxUrl || ajaxurl,
+                type: 'POST',
                 data: {
                     action: 'cbd_duplicate_block',
                     block_id: blockId,
-                    nonce: cbdAdmin.nonce || ''
+                    nonce: cbdAdmin.nonce || $('#cbd-nonce').val()
                 },
                 success: function(response) {
-                    console.log('✅ Duplicate response:', response);
                     if (response.success) {
-                        self.showMessage('✅ Block dupliziert', 'success');
-                        // Reload page to show new block
+                        self.showMessage('✅ Block erfolgreich dupliziert! Seite wird neu geladen...', 'success');
                         setTimeout(function() {
                             location.reload();
-                        }, 1000);
+                        }, 1500);
                     } else {
-                        self.showMessage('❌ ' + (response.data?.message || 'Fehler'), 'error');
+                        self.showMessage('❌ ' + (response.data || 'Fehler beim Duplizieren'), 'error');
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('❌ Duplicate error:', {xhr, status, error});
+                error: function() {
                     self.showMessage('❌ Fehler beim Duplizieren', 'error');
                 }
             });
         },
 
         /**
-         * Open Features Modal
+         * Open features modal
          */
         openFeaturesModal: function(blockId, blockName) {
-            console.log('⚙️ Opening features modal:', {blockId, blockName});
+            if (DEBUG) console.log('Opening features modal:', {blockId, blockName});
             
             // Trigger the features modal from admin-features.js
             if (typeof CBDFeatures !== 'undefined' && CBDFeatures.openFeaturesModal) {
@@ -423,10 +443,16 @@
             if ($.fn.wpColorPicker) {
                 $('.cbd-color-picker').wpColorPicker({
                     change: function(event, ui) {
-                        $(event.target).trigger('change');
+                        $(event.target).trigger('input');
+                        CBDAdmin.updatePreview();
+                    },
+                    clear: function() {
+                        CBDAdmin.updatePreview();
                     }
                 });
-                console.log('🎨 Color pickers initialized');
+                if (DEBUG) console.log('✅ Color pickers initialized');
+            } else {
+                if (DEBUG) console.log('⚠️ wpColorPicker not available');
             }
         },
 
@@ -434,60 +460,46 @@
          * Initialize preview
          */
         initPreview: function() {
+            const self = this;
+            
+            // Listen for changes
+            $('#cbd-block-form input, #cbd-block-form select, #cbd-block-form textarea').on('input change', function() {
+                self.updatePreview();
+            });
+            
+            // Initial preview
             this.updatePreview();
         },
 
         /**
-         * Update live preview
+         * Update preview
          */
         updatePreview: function() {
-            const $preview = $('.cbd-preview-content, .cbd-container-preview').first();
-            if ($preview.length === 0) return;
+            const $preview = $('#cbd-preview-content');
+            if (!$preview.length) return;
             
-            // Get values
-            const padding = {
-                top: $('#padding-top').val() || 20,
-                right: $('#padding-right').val() || 20,
-                bottom: $('#padding-bottom').val() || 20,
-                left: $('#padding-left').val() || 20
-            };
-            
+            // Get current values
             const styles = {
-                paddingTop: padding.top + 'px',
-                paddingRight: padding.right + 'px',
-                paddingBottom: padding.bottom + 'px',
-                paddingLeft: padding.left + 'px',
-                backgroundColor: $('#background-color').val() || '#ffffff',
-                color: $('#text-color').val() || '#333333',
-                textAlign: $('#text-alignment').val() || 'left',
-                borderWidth: ($('#border-width').val() || 0) + 'px',
-                borderStyle: 'solid',
-                borderColor: $('#border-color').val() || '#dddddd',
-                borderRadius: ($('#border-radius').val() || 0) + 'px'
+                backgroundColor: $('#background-color').val(),
+                color: $('#text-color').val(),
+                borderStyle: $('#border-style').val(),
+                borderWidth: $('#border-width').val() + 'px',
+                borderColor: $('#border-color').val(),
+                borderRadius: $('#border-radius').val() + 'px',
+                padding: $('#padding').val() + 'px',
+                margin: $('#margin').val() + 'px'
             };
             
             // Apply styles
             $preview.css(styles);
-        },
-
-        /**
-         * Generate slug from name
-         */
-        generateSlug: function() {
-            const $name = $('#block-name');
-            const $slug = $('#block-slug');
             
-            // Only generate if slug is empty
-            if (!$slug.val()) {
-                const name = $name.val();
-                const slug = name.toLowerCase()
-                    .replace(/[äöü]/g, function(match) {
-                        return {'ä': 'ae', 'ö': 'oe', 'ü': 'ue'}[match];
-                    })
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-                
-                $slug.val(slug);
+            // Apply custom CSS
+            const customCSS = $('#custom-css').val();
+            if (customCSS) {
+                $('#cbd-preview-custom-style').remove();
+                $('<style id="cbd-preview-custom-style">' + 
+                  '#cbd-preview-content { ' + customCSS + ' }' +
+                  '</style>').appendTo('head');
             }
         },
 
@@ -495,9 +507,78 @@
          * Initialize bulk actions
          */
         initBulkActions: function() {
+            const self = this;
+            
             // Select all checkbox
-            $('#cbd-select-all').on('change', function() {
+            $('#cb-select-all').on('change', function() {
                 $('.cbd-block-checkbox').prop('checked', $(this).prop('checked'));
+            });
+            
+            // Bulk action submit
+            $('#doaction, #doaction2').on('click', function(e) {
+                e.preventDefault();
+                
+                const action = $(this).prev('select').val();
+                if (action === '-1') return;
+                
+                const selected = $('.cbd-block-checkbox:checked').map(function() {
+                    return $(this).val();
+                }).get();
+                
+                if (selected.length === 0) {
+                    self.showMessage('⚠️ Bitte wählen Sie mindestens einen Block aus.', 'warning');
+                    return;
+                }
+                
+                self.performBulkAction(action, selected);
+            });
+        },
+
+        /**
+         * Perform bulk action
+         */
+        performBulkAction: function(action, blockIds) {
+            const self = this;
+            let confirmMsg = '';
+            
+            switch(action) {
+                case 'delete':
+                    confirmMsg = 'Wirklich ' + blockIds.length + ' Block(s) löschen?';
+                    break;
+                case 'activate':
+                    confirmMsg = blockIds.length + ' Block(s) aktivieren?';
+                    break;
+                case 'deactivate':
+                    confirmMsg = blockIds.length + ' Block(s) deaktivieren?';
+                    break;
+                default:
+                    return;
+            }
+            
+            if (!confirm(confirmMsg)) return;
+            
+            $.ajax({
+                url: cbdAdmin.ajaxUrl || ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'cbd_bulk_action',
+                    bulk_action: action,
+                    block_ids: blockIds,
+                    nonce: cbdAdmin.nonce || $('#cbd-nonce').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        self.showMessage('✅ ' + response.data.message, 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        self.showMessage('❌ ' + (response.data || 'Fehler'), 'error');
+                    }
+                },
+                error: function() {
+                    self.showMessage('❌ Fehler bei der Bulk-Aktion', 'error');
+                }
             });
         },
 
@@ -505,41 +586,70 @@
          * Initialize search
          */
         initSearch: function() {
-            $('#cbd-search-blocks').on('input', function() {
-                const searchTerm = $(this).val().toLowerCase();
+            const self = this;
+            let searchTimeout;
+            
+            // Live search
+            $('#cbd-search-input').on('input', function() {
+                clearTimeout(searchTimeout);
+                const query = $(this).val();
                 
-                $('.cbd-blocks-tbody tr, tbody tr').each(function() {
-                    const $row = $(this);
-                    const name = $row.find('.column-name').text().toLowerCase();
-                    const slug = $row.find('.column-slug').text().toLowerCase();
-                    const description = $row.find('.column-description').text().toLowerCase();
-                    
-                    if (name.includes(searchTerm) || slug.includes(searchTerm) || description.includes(searchTerm)) {
-                        $row.show();
-                    } else {
-                        $row.hide();
-                    }
-                });
+                searchTimeout = setTimeout(function() {
+                    self.performSearch(query);
+                }, 300);
+            });
+            
+            // Search form submit
+            $('#cbd-search-form').on('submit', function(e) {
+                e.preventDefault();
+                self.performSearch($('#cbd-search-input').val());
+            });
+        },
+
+        /**
+         * Perform search
+         */
+        performSearch: function(query) {
+            const $rows = $('.cbd-blocks-table tbody tr');
+            
+            if (!query) {
+                $rows.show();
+                return;
+            }
+            
+            const searchTerm = query.toLowerCase();
+            
+            $rows.each(function() {
+                const $row = $(this);
+                const blockName = $row.find('.cbd-block-name').text().toLowerCase();
+                const blockSlug = $row.find('.cbd-block-slug').text().toLowerCase();
+                const blockDesc = $row.find('.cbd-block-description').text().toLowerCase();
+                
+                if (blockName.includes(searchTerm) || 
+                    blockSlug.includes(searchTerm) || 
+                    blockDesc.includes(searchTerm)) {
+                    $row.show();
+                } else {
+                    $row.hide();
+                }
             });
         }
     };
-
-    // Initialize on DOM ready with multiple fallbacks
+    
+    // Initialize when DOM is ready
     $(document).ready(function() {
-        console.log('📄 DOM ready - initializing CBD Admin...');
+        if (DEBUG) console.log('📄 DOM ready, initializing CBD Admin...');
         CBDAdmin.init();
     });
     
-    // Fallback for late loading
+    // Also bind to window load as fallback
     $(window).on('load', function() {
-        if (!window.CBDAdminInitialized) {
-            console.log('📄 Window load - initializing CBD Admin (fallback)...');
+        // Check if already initialized
+        if (!CBDAdmin.initialized) {
+            if (DEBUG) console.log('🪟 Window loaded, initializing CBD Admin as fallback...');
             CBDAdmin.init();
-            window.CBDAdminInitialized = true;
+            CBDAdmin.initialized = true;
         }
     });
-
-    // Export for global access
-    window.CBDAdmin = CBDAdmin;
-
+    
 })(jQuery);

@@ -1,6 +1,6 @@
 /**
  * Container Block Designer - Admin Styles
- * Version: 2.2.0
+ * Version: 2.3.1 - Complete Version
  */
 
 /* ========================================
@@ -9,106 +9,62 @@
 
 .cbd-admin-wrap {
     margin-top: 20px;
+    max-width: 1400px;
 }
 
 .cbd-admin-wrap .page-title-action {
     margin-left: 10px;
+    text-decoration: none;
+}
+
+.cbd-admin-wrap .wp-heading-inline {
+    margin-right: 15px;
+}
+
+/* Required field indicator */
+.required {
+    color: #d63638;
+    font-weight: bold;
 }
 
 /* ========================================
-   Blocks List Table
+   Notices and Messages
    ======================================== */
 
-.cbd-blocks-table {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    margin-top: 20px;
+.cbd-notice {
+    margin: 15px 0;
+    animation: slideDown 0.3s ease;
 }
 
-.cbd-blocks-table th {
-    font-weight: 600;
-    background: #f9f9f9;
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.cbd-blocks-table .column-id {
-    width: 60px;
+.cbd-notice.notice-success {
+    border-left-color: #00a32a;
 }
 
-.cbd-blocks-table .column-status {
-    width: 100px;
+.cbd-notice.notice-error {
+    border-left-color: #d63638;
 }
 
-.cbd-blocks-table .column-features {
-    width: 200px;
+.cbd-notice.notice-warning {
+    border-left-color: #dba617;
 }
 
-.cbd-blocks-table .column-actions {
-    width: 150px;
-}
-
-/* Status Badge */
-.cbd-status-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.cbd-status-badge.active {
-    background: #d4f4dd;
-    color: #00a32a;
-    border: 1px solid #00a32a;
-}
-
-.cbd-status-badge.inactive {
-    background: #fef1f1;
-    color: #d63638;
-    border: 1px solid #d63638;
-}
-
-/* Features Badges */
-.cbd-features-badges {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.cbd-feature-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    background: #e8f4f8;
-    color: #135e96;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: 500;
-    border: 1px solid #b5d9ea;
-}
-
-/* Action Buttons */
-.cbd-action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.cbd-action-buttons .button {
-    padding: 4px 8px;
-    height: auto;
-    min-height: 26px;
-    font-size: 12px;
-}
-
-.cbd-action-buttons .button .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    vertical-align: middle;
-    margin-right: 2px;
+.cbd-notice.notice-info {
+    border-left-color: #2271b1;
 }
 
 /* ========================================
-   Block Editor Form
+   Edit Container Layout
    ======================================== */
 
 .cbd-edit-container {
@@ -127,110 +83,109 @@
     flex-shrink: 0;
 }
 
-/* Cards */
+@media (max-width: 1200px) {
+    .cbd-edit-container {
+        flex-direction: column;
+    }
+    
+    .cbd-edit-sidebar {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   Cards
+   ======================================== */
+
 .cbd-card {
     background: #fff;
     border: 1px solid #c3c4c7;
     border-radius: 4px;
+    padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
-.cbd-card-header {
-    padding: 15px 20px;
+.cbd-card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f9f9f9;
-}
-
-.cbd-card-header h2,
-.cbd-card-header h3 {
-    margin: 0;
-    font-size: 16px;
+    font-size: 1.3em;
     font-weight: 600;
-    color: #1e1e1e;
+    color: #1d2327;
 }
 
-.cbd-card-body {
-    padding: 20px;
+.cbd-card h3 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #1d2327;
 }
 
-/* Form Fields */
-.cbd-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+.cbd-card-sticky {
+    position: sticky;
+    top: 32px;
 }
+
+/* ========================================
+   Form Fields
+   ======================================== */
 
 .cbd-form-field {
     margin-bottom: 20px;
 }
 
-.cbd-form-field:last-child {
-    margin-bottom: 0;
-}
-
 .cbd-form-field label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     font-weight: 600;
-    font-size: 13px;
-    color: #1e1e1e;
+    color: #1d2327;
 }
 
 .cbd-form-field input[type="text"],
 .cbd-form-field input[type="number"],
+.cbd-form-field input[type="email"],
 .cbd-form-field textarea,
 .cbd-form-field select {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #8c8f94;
-    border-radius: 4px;
-    font-size: 14px;
-    background: #fff;
+    max-width: 100%;
 }
 
-.cbd-form-field input:focus,
-.cbd-form-field textarea:focus,
-.cbd-form-field select:focus {
-    border-color: #2271b1;
-    box-shadow: 0 0 0 1px #2271b1;
-    outline: none;
+.cbd-form-field .description,
+.cbd-form-field p.description {
+    margin-top: 5px;
+    color: #646970;
+    font-size: 13px;
+    font-style: normal;
 }
 
-.cbd-form-field .description {
+.cbd-form-field small {
+    display: block;
     margin-top: 5px;
     color: #646970;
     font-size: 12px;
-    font-style: italic;
 }
 
-/* Style Sections */
+/* ========================================
+   Style Sections
+   ======================================== */
+
 .cbd-style-section {
     margin-bottom: 30px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f1;
 }
 
 .cbd-style-section:last-child {
     border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.cbd-style-section h4 {
-    margin: 0 0 15px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e1e1e;
 }
 
 /* Spacing Controls */
 .cbd-spacing-controls {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 15px;
 }
 
@@ -240,30 +195,32 @@
 }
 
 .cbd-spacing-field label {
-    font-size: 12px;
+    font-size: 13px;
     margin-bottom: 5px;
     color: #646970;
 }
 
-.cbd-spacing-field input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #8c8f94;
-    border-radius: 4px;
-}
-
-.cbd-spacing-field span {
-    margin-top: 5px;
-    font-size: 11px;
-    color: #999;
+.cbd-spacing-sync {
+    margin-top: 10px;
     text-align: center;
 }
 
-/* Color Picker */
+/* Color Controls */
+.cbd-color-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.cbd-color-field {
+    display: flex;
+    flex-direction: column;
+}
+
 .cbd-color-picker-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cbd-color-picker {
@@ -277,73 +234,58 @@
 
 .cbd-color-text {
     flex: 1;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.cbd-color-preset {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Border Controls */
+.cbd-border-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.cbd-border-field {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Input Groups */
 .cbd-input-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .cbd-input-group input {
     flex: 1;
+    min-width: 60px;
 }
 
 .cbd-input-group span {
     color: #646970;
     font-size: 13px;
+    white-space: nowrap;
 }
 
-/* Switch Toggle */
-.cbd-switch {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
+/* Range Inputs */
+.cbd-range {
+    flex: 1;
 }
 
-.cbd-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.cbd-switch-slider {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    background-color: #ccc;
-    border-radius: 24px;
-    transition: 0.3s;
-    margin-right: 10px;
-}
-
-.cbd-switch-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.3s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.cbd-switch input:checked + .cbd-switch-slider {
-    background-color: #2271b1;
-}
-
-.cbd-switch input:checked + .cbd-switch-slider:before {
-    transform: translateX(20px);
-}
-
-.cbd-switch-label {
-    font-size: 14px;
-    color: #1e1e1e;
+.cbd-range-value {
+    width: 60px;
 }
 
 /* ========================================
@@ -362,12 +304,26 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .cbd-container-preview {
     min-height: 150px;
-    position: relative;
     padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.cbd-container-preview h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.cbd-container-preview p {
+    margin-bottom: 15px;
+}
+
+.cbd-container-preview p:last-child {
+    margin-bottom: 0;
 }
 
 .cbd-preview-icon {
@@ -378,6 +334,7 @@
     font-size: 32px;
     width: 32px;
     height: 32px;
+    color: #2271b1;
 }
 
 .cbd-preview-features {
@@ -389,67 +346,71 @@
 }
 
 .cbd-preview-info {
-    margin-top: 15px;
-    padding-top: 15px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid #e0e0e0;
-}
-
-.cbd-preview-info p {
-    margin: 5px 0;
-    font-size: 12px;
-    color: #646970;
-}
-
-.cbd-preview-info code {
-    background: #f0f0f1;
-    padding: 2px 5px;
-    border-radius: 3px;
-    font-size: 11px;
+    text-align: center;
+    color: #666;
 }
 
 /* ========================================
-   Features Configuration
+   Features Summary
    ======================================== */
 
-.cbd-features-btn {
-    background: #2271b1 !important;
-    border-color: #2271b1 !important;
-    color: #fff !important;
+.cbd-features-summary {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
 }
 
-.cbd-features-btn:hover {
-    background: #135e96 !important;
-    border-color: #135e96 !important;
+.cbd-features-summary p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
 }
 
-.cbd-features-btn .dashicons {
-    margin-right: 4px;
-    vertical-align: middle;
+.cbd-features-list {
+    margin: 10px 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.cbd-features-list li {
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cbd-features-list .dashicons {
+    color: #00a32a;
+    font-size: 16px;
+}
+
+.cbd-features-list code {
+    background: #e0e0e0;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+.cbd-features-list em {
+    color: #646970;
+    font-size: 12px;
+    margin-left: 5px;
 }
 
 .cbd-no-features {
     color: #646970;
     font-style: italic;
-    padding: 15px;
-    text-align: center;
-    background: #f9f9f9;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.cbd-no-features small {
-    display: block;
-    margin-top: 5px;
-    color: #999;
-    font-size: 12px;
-}
-
-.cbd-active-features {
-    padding: 10px;
-}
-
-.cbd-active-features p {
-    margin: 0 0 10px 0;
-    font-weight: 600;
+.cbd-no-features .dashicons {
+    color: #dba617;
 }
 
 /* ========================================
@@ -457,27 +418,281 @@
    ======================================== */
 
 .cbd-form-actions {
-    margin-top: 30px;
-    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cbd-form-actions hr {
+    margin: 10px 0;
+    border: none;
     border-top: 1px solid #e0e0e0;
+}
+
+.cbd-form-actions .button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
+.cbd-form-actions .button .dashicons {
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.button-link-delete {
+    color: #d63638 !important;
+}
+
+.button-link-delete:hover {
+    color: #a02222 !important;
+    background: #fef1f1 !important;
+}
+
+/* ========================================
+   Info Table
+   ======================================== */
+
+.cbd-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cbd-info-table th,
+.cbd-info-table td {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 13px;
+}
+
+.cbd-info-table th {
+    text-align: left;
+    color: #646970;
+    font-weight: 600;
+    width: 40%;
+}
+
+.cbd-info-table td {
+    color: #1d2327;
+}
+
+.cbd-info-table tr:last-child th,
+.cbd-info-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cbd-info-table code {
+    background: #f0f0f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    word-break: break-all;
+}
+
+/* ========================================
+   Quick Features
+   ======================================== */
+
+.cbd-quick-features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cbd-quick-feature {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.cbd-quick-feature:hover {
+    background: #f0f0f1;
+}
+
+.cbd-quick-feature input[type="checkbox"] {
+    margin: 0;
+}
+
+.cbd-quick-feature span {
+    font-size: 14px;
+}
+
+/* ========================================
+   Template Buttons
+   ======================================== */
+
+.cbd-template-buttons {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.cbd-template-btn {
+    min-width: 80px;
+}
+
+.cbd-template-btn:hover {
+    background: #f0f6fc !important;
+    border-color: #2271b1 !important;
+}
+
+/* ========================================
+   Alignment Buttons
+   ======================================== */
+
+.cbd-alignment-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.cbd-alignment-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    border: 1px solid #8c8f94;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.cbd-save-status {
-    margin-left: 15px;
-    color: #00a32a;
-    font-weight: 500;
-    display: none;
-    animation: cbd-fade-in 0.3s ease;
+.cbd-alignment-btn:hover {
+    background: #f0f0f1;
+    border-color: #2271b1;
 }
 
-.cbd-save-status.show {
+.cbd-alignment-btn.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: white;
+}
+
+.cbd-alignment-btn .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* ========================================
+   Help Content
+   ======================================== */
+
+.cbd-help-content {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.cbd-help-content p {
+    margin-top: 0;
+}
+
+.cbd-help-content ul {
+    margin: 10px 0 0 20px;
+    list-style: disc;
+}
+
+.cbd-help-content li {
+    margin: 5px 0;
+    font-size: 13px;
+    color: #646970;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.cbd-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2271b1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 782px) {
+    .cbd-admin-wrap {
+        margin-top: 10px;
+    }
+    
+    .cbd-card {
+        padding: 15px;
+    }
+    
+    .cbd-spacing-controls,
+    .cbd-color-controls,
+    .cbd-border-controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .cbd-template-buttons {
+        flex-direction: column;
+    }
+    
+    .cbd-template-btn {
+        width: 100%;
+    }
+    
+    .cbd-form-actions .button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+/* ========================================
+   WordPress Admin Overrides
+   ======================================== */
+
+.cbd-admin-wrap .form-table th {
+    padding-left: 0;
+}
+
+.cbd-admin-wrap .regular-text {
+    max-width: 100%;
+}
+
+.cbd-admin-wrap .large-text {
+    width: 100%;
+}
+
+/* Fix for WordPress color picker */
+.cbd-admin-wrap .wp-picker-container {
     display: inline-block;
 }
 
-@keyframes cbd-fade-in {
+.cbd-admin-wrap .wp-picker-container .wp-color-result {
+    margin: 0;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+.cbd-fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
     from {
         opacity: 0;
     }
@@ -486,148 +701,67 @@
     }
 }
 
+.cbd-slide-in {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 /* ========================================
-   Empty State
+   Utility Classes
    ======================================== */
 
-.cbd-empty-state {
+.cbd-text-center {
     text-align: center;
-    padding: 60px 20px;
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
+}
+
+.cbd-text-right {
+    text-align: right;
+}
+
+.cbd-mt-10 {
+    margin-top: 10px;
+}
+
+.cbd-mt-20 {
     margin-top: 20px;
 }
 
-.cbd-empty-state .dashicons {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: #ddd;
-    margin-bottom: 15px;
+.cbd-mb-10 {
+    margin-bottom: 10px;
 }
 
-.cbd-empty-state h3 {
-    margin: 0 0 10px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e1e1e;
+.cbd-mb-20 {
+    margin-bottom: 20px;
 }
 
-.cbd-empty-state p {
-    color: #646970;
-    margin: 0 0 20px 0;
+.cbd-hidden {
+    display: none;
 }
 
-/* ========================================
-   Responsive Design
-   ======================================== */
-
-@media (max-width: 1200px) {
-    .cbd-edit-container {
-        flex-direction: column;
-    }
-    
-    .cbd-edit-sidebar {
-        width: 100%;
-    }
+.cbd-flex {
+    display: flex;
 }
 
-@media (max-width: 768px) {
-    .cbd-form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .cbd-spacing-controls {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .cbd-blocks-table {
-        font-size: 12px;
-    }
-    
-    .cbd-blocks-table .column-description,
-    .cbd-blocks-table .column-features {
-        display: none;
-    }
-    
-    .cbd-action-buttons {
-        flex-direction: column;
-    }
-    
-    .cbd-action-buttons .button {
-        width: 100%;
-        justify-content: center;
-    }
+.cbd-flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (max-width: 480px) {
-    .cbd-spacing-controls {
-        grid-template-columns: 1fr;
-    }
-    
-    .cbd-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .cbd-features-btn {
-        width: 100%;
-    }
+.cbd-gap-10 {
+    gap: 10px;
 }
 
-/* ========================================
-   WordPress Admin Compatibility
-   ======================================== */
-
-#wpcontent {
-    padding-left: 0;
-}
-
-.cbd-admin-wrap .wp-heading-inline {
-    margin-right: 15px;
-}
-
-.cbd-admin-wrap .notice {
-    margin: 15px 0;
-}
-
-/* Fix for WordPress color picker */
-.wp-picker-container {
-    display: inline-block;
-}
-
-.wp-picker-container .wp-color-result.button {
-    margin-right: 6px;
-}
-
-/* ========================================
-   Loading States
-   ======================================== */
-
-.cbd-loading {
-    opacity: 0.6;
-    pointer-events: none;
-    position: relative;
-}
-
-.cbd-loading:after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #2271b1;
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: cbd-spin 0.6s linear infinite;
-}
-
-@keyframes cbd-spin {
-    to {
-        transform: rotate(360deg);
-    }
+.cbd-gap-20 {
+    gap: 20px;
 }
